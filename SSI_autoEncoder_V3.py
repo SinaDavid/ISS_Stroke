@@ -5,22 +5,43 @@ Created on Tue Jun  8 14:32:55 2021
 
 
 To Do list:
-    - push to github
-    - create scatter plot --> done
+    - create error with scatter plot on x and y axis.
+    - create subplot with 4 figures to present next week. 
+    - explore 2 gait cycles / or 1 gait cycle.
+    - different markers.
+    - 
+    
+    - push to github --> done
+    scatterplot imporvements
+        - color cotting fallers and non-fallers --> done
+        - color cotting all subjects --> done
     - create multiple subplots.
     - optimize model by implementing leakyrelu on large scale. --> not sure if the model further improves.  
     - add type of perturbations. --> increase bottleneck towards 3 vars. 
         - create 3d visual and model 
-    - color cotting fallers and non-fallers
-    - plot the validation loss function to explore which architecture describes the data the best. 
+    
+    - plot the validation loss function to explore which architecture describes the data the best. --> done
+    - save python variables so Escience instructors can work with it as well. 
+    
 
-
-
-
-
+When is the model adequet enough to actually write a paper about it?
+    - check input (epochlengths) , markers, angles.
+    - architecture of the model.
+    - activation functions. 
+    
 
 
 Questions to ask:
+    
+    - We really need to have advice how to improve the model further. 
+        - particaully activation functions.
+        - but even more so the architecture it self (symmetrical). !!
+        
+        
+Research questions: 
+    - predict CNN-LSTM prediction model and explain by variational autoencoders why it is not capable of predicting ()it is not in the data!
+    - See if steady state gait does predict falls!
+    - See if this method (encoders) discriminate different responses after perturbations
 
 
 
@@ -225,6 +246,10 @@ X_data = X_data.reshape(len(y_cat),epochLength,n_features)# we are not going to 
 
 train_data = X_data[np.arange(start=2,stop=np.shape(X_data)[0],step=2)]
 test_data = X_data[np.arange(start=1,stop=np.shape(X_data)[0],step=2)]
+train_data_y = y[np.arange(start=2,stop=np.shape(y)[0],step=2)]
+test_data_y = y[np.arange(start=1,stop=np.shape(y)[0],step=2)]
+train_data_group = group[np.arange(start=2,stop=np.shape(group)[0],step=2)]
+test_data_group = group[np.arange(start=1,stop=np.shape(group)[0],step=2)]
 
 
 ####### Split data by group (subject level) #################
@@ -314,8 +339,9 @@ autoencoder.compile(loss=get_loss(distribution_mean, distribution_variance), opt
 autoencoder.summary()
 
 
-autoencoder.fit(train_data, train_data, epochs=200, batch_size=64, validation_data=(test_data, test_data))
+history = autoencoder.fit(train_data, train_data, epochs=200, batch_size=64, validation_data=(test_data, test_data))
 
+plt.plot(history.history['val_loss'])
 
 
 # Next visualize the decoded data against original data.
@@ -332,46 +358,64 @@ ax2.plot(testPredicted)
 
 
 
-x = []
-y = []
-# z = []
+xx = []
+yy = []
+z = []
+groupcolor = []
 for i in range(0,len(test_data)):
     # z.append(testy[i])
     test = test_data[i]
     test = np.expand_dims(test, axis=0)
     op = encoder_model.predict(test)
-    x.append(op[0][0])
-    y.append(op[0][1])
-    # z.append(op[1][1])
+    xx.append(op[0][0])
+    yy.append(op[0][1])
+    z.append(test_data_y[i]) # Fall risk
 
 import pandas as pd
 # import seaborn as sns
 import seaborn as sns
 
 df = pd.DataFrame()
-df['x'] = x
-df['y'] = y
-# df['z'] = ["digit-"+str(k) for k in z]
-
-plt.figure(figsize=(8, 6))
-sns.scatterplot(x='x', y='y', data=df)
-plt.show()
+df['xx'] = xx
+df['yy'] = yy
+df['z'] = ["fall risk-"+str(k) for k in z]
+df['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
 
 
+# plt.figure(figsize=(8, 6))
+
+# fig3, (ax1,ax2,ax3,ax4) = plt.subplot2(nrows=2, ncols=2)
+fig3, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
+sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df )
+axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
 
 
+sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df )
+axes[0,1].set_title('Raw latent features per perturbation colored by subject')
+
+# plt.figure(figsize=(8, 6))
+# sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=df)
+# plt.show()
+
+meanDf = df.groupby(['groupcolor']).mean()
+
+sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf )
+axes[1,0].set_title('Average latent features colored by subject')
 
 
+# plt.figure(figsize=(8, 6))
+# sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=meanDf)
+# plt.show()
 
 
+meanDfwithFallRisk = df.groupby(['groupcolor','z']).mean()
 
+sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk )
+axes[1,1].set_title('Average latent features colored by fall risk')
 
-
-
-
-
-
-
+# plt.figure(figsize=(8, 6))
+# sns.scatterplot(x='xx', y='yy',hue='z', data=meanDfwithFallRisk)
+# plt.show()
 
 
 
