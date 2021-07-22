@@ -29,12 +29,11 @@ Questions to ask:
 from numpy import mean
 from numpy import std
 from numpy import dstack
-# from pandas import read_csv
-# from matplotlib import pyplot
+from pandas import read_csv
+from matplotlib import pyplot
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from tensorflow.keras import models
-from tensorflow.keras.models import Sequential
+from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import Dropout
@@ -75,12 +74,12 @@ data = []
 #dataDir1 = 'F:\\SSI_data\\10sec\\ML_markervel\\NonParCont\\' #--> 0.55
 #dataDir2 = 'F:\\SSI_data\\10sec\\ML_markervel\\ParCont\\'  #--> 0.39
 #dataDir3 = 'F:\\SSI_data\\10sec\\ML_markervel\\NonParYpsi\\' #--> 0.53
-#dataDir4 = 'F:\\SSI_data\\10sec\\ML_markervel\\ParYpsi\\' #--> 0.52
+dataDir4 = 'F:\\SSI_data\\10sec\\ML_markervel\\ParYpsi\\' #--> 0.52
 ## Adding first data perturbation. ###
 #dataDir3 =  'F:\\SSI_data\\test\\'
 
 #dataDir4 = 'F:\\SSI_data\\V3_Data\\V3_Data\\10sec\\ML_markervel\\ParYpsi\\'
-dataDir1 = 'F:\\SSI_data\\Vicon\\'
+#dataDir1 = 'F:\\SSI_data\\Vicon\\'
 
 
 group = []
@@ -183,8 +182,10 @@ y_cat = to_categorical(y)
 
 
 
-########    Reshape  the X data ############
-X_data = X_data.reshape(len(y_cat),epochLength,n_features+numberPer) 
+########    Reshape  the X data into a single dimension  ############
+X_data = X_data.reshape(len(y_cat),epochLength*(n_features+numberPer)) 
+
+
 ####### Split data by group (subject level) #################
 #group_kfold = GroupKFold(n_splits=2)
 #group_kfold.get_n_splits(X_data, y_cat, group)
@@ -208,19 +209,53 @@ X_data = X_data.reshape(len(y_cat),epochLength,n_features+numberPer)
 
 
 ########### Determine imbalance and calculate weights  #######################
-n_samples = len(y)
-n_classes = 2
-n_samplesj = np.sum(y == 0)
-n_samplesi = np.sum(y == 1)
-#n_samplesk = np.sum(finalDatay == 2)
-#n_samplesg = np.sum(finalDatay == 3)
-wj=n_samples / (n_classes * n_samplesj)
-wi=n_samples / (n_classes * n_samplesi)
-#wk=n_samples / (n_classes * n_samplesk)
-#wg=n_samples / (n_classes * n_samplesg)
-class_weight = {0: wj,
-                1: wi
-                }
+#n_samples = len(y)
+#n_classes = 2
+#n_samplesj = np.sum(y == 0)
+#n_samplesi = np.sum(y == 1)
+##n_samplesk = np.sum(finalDatay == 2)
+##n_samplesg = np.sum(finalDatay == 3)
+#wj=n_samples / (n_classes * n_samplesj)
+#wi=n_samples / (n_classes * n_samplesi)
+##wk=n_samples / (n_classes * n_samplesk)
+##wg=n_samples / (n_classes * n_samplesg)
+#class_weight = {0: wj,
+#                1: wi
+#                }
+
+################################# Encoder ###################
+import tensorflow
+input_data = tensorflow.keras.layers.Input(shape=(3000,))
+
+encoder = tensorflow.keras.layers.Dense(100)(input_data)
+encoder = tensorflow.keras.layers.Activation('relu')(encoder)
+ 
+encoder = tensorflow.keras.layers.Dense(50)(encoder)
+encoder = tensorflow.keras.layers.Activation('relu')(encoder)
+ 
+encoder = tensorflow.keras.layers.Dense(25)(encoder)
+encoder = tensorflow.keras.layers.Activation('relu')(encoder)
+ 
+encoded = tensorflow.keras.layers.Dense(2)(encoder)
+
+ ########################### Decoder ##################
+ 
+decoder = tensorflow.keras.layers.Dense(25)(encoded)
+decoder = tensorflow.keras.layers.Activation('relu')(decoder)
+ 
+decoder = tensorflow.keras.layers.Dense(50)(decoder)
+decoder = tensorflow.keras.layers.Activation('relu')(decoder)
+ 
+decoder = tensorflow.keras.layers.Dense(100)(decoder)
+decoder = tensorflow.keras.layers.Activation('relu')(decoder)
+ 
+decoded = tensorflow.keras.layers.Dense(784)(decoder)
+
+#################### Loss function #################
+autoencoder = tensorflow.keras.models.Model(inputs=input_data, outputs=decoded)
+autoencoder.compile(loss='mse', optimizer='adam')
+autoencoder.summary()
+
 
 
 
