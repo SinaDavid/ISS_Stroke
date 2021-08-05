@@ -357,6 +357,8 @@ ax2.plot(testPredicted)
 # plot Latent feature clusters in scatterplot. 
 
 # implement TSNE to be able to plot high dimensional data (TSNE is used for dimensionality reduction comparable to PCA)
+#https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
+
 from sklearn.manifold import TSNE
 
 encoded = []
@@ -370,6 +372,7 @@ for i in range(0,len(test_data)):
     encoded.append(op[0])
 
 
+# perplexity is a factor to experiment with. A low perplexity is recommended for small datasets. perplexitiy ranges between 5 and 50
 X_embedded = TSNE(n_components=2,perplexity=20).fit_transform(np.array(encoded))
 X_embedded.shape
 
