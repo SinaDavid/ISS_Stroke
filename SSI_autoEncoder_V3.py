@@ -35,7 +35,7 @@ Questions to ask:
     
     - We really need to have advice how to improve the model further. 
         - particaully activation functions.
-        - but even more so the architecture it self (symmetrical). !!
+        - but even more so the architecture it self (symmetrical). !! --> decoder has to mirror the encoder, changed this in the code (Sina)
         
         
 Research questions: 
