@@ -318,18 +318,6 @@ decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
 decoder = tensorflow.keras.layers.Conv1DTranspose(64, 5, activation='relu')(decoder)
 decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
 
-#decoder_input = tensorflow.keras.layers.Input(shape=(2))
-#decoder = tensorflow.keras.layers.Dense(64)(decoder_input)
-#decoder = tensorflow.keras.layers.Reshape((1, 64))(decoder)
-#decoder = tensorflow.keras.layers.Conv1DTranspose(64, 3, activation='relu')(decoder)
-
-#decoder = tensorflow.keras.layers.Conv1DTranspose(32, 5, activation='relu')(decoder)
-#decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
-
-#decoder = tensorflow.keras.layers.Conv1DTranspose(16, 5, activation='relu')(decoder)
-#decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
-
-# decoder_output = tensorflow.keras.layers.Conv1DTranspose(6, 6, activation='relu')(decoder)
 
 decoder_output = tensorflow.keras.layers.Conv1DTranspose(6, 6)(decoder)
 decoder_output = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(decoder_output)
