@@ -305,17 +305,29 @@ encoder_model = tensorflow.keras.Model(input_data, latent_encoding)
 encoder_model.summary()
 
 ################### DECODER PART ############
+#  Changed dimensions to be mirrowed (Sina)
 
-decoder_input = tensorflow.keras.layers.Input(shape=(2))
+decoder_input = tensorflow.keras.layers.Input(shape=(6))
 decoder = tensorflow.keras.layers.Dense(64)(decoder_input)
 decoder = tensorflow.keras.layers.Reshape((1, 64))(decoder)
-decoder = tensorflow.keras.layers.Conv1DTranspose(64, 3, activation='relu')(decoder)
+decoder = tensorflow.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
 
 decoder = tensorflow.keras.layers.Conv1DTranspose(32, 5, activation='relu')(decoder)
 decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
 
-decoder = tensorflow.keras.layers.Conv1DTranspose(16, 5, activation='relu')(decoder)
+decoder = tensorflow.keras.layers.Conv1DTranspose(64, 5, activation='relu')(decoder)
 decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
+
+#decoder_input = tensorflow.keras.layers.Input(shape=(2))
+#decoder = tensorflow.keras.layers.Dense(64)(decoder_input)
+#decoder = tensorflow.keras.layers.Reshape((1, 64))(decoder)
+#decoder = tensorflow.keras.layers.Conv1DTranspose(64, 3, activation='relu')(decoder)
+
+#decoder = tensorflow.keras.layers.Conv1DTranspose(32, 5, activation='relu')(decoder)
+#decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
+
+#decoder = tensorflow.keras.layers.Conv1DTranspose(16, 5, activation='relu')(decoder)
+#decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
 
 # decoder_output = tensorflow.keras.layers.Conv1DTranspose(6, 6, activation='relu')(decoder)
 
@@ -356,17 +368,34 @@ ax2.plot(testPredicted)
 
 # plot Latent feature clusters in scatterplot. 
 
+# implement TSNE to be able to plot high dimensional data (TSNE is used for dimensionality reduction comparable to PCA)
+from sklearn.manifold import TSNE
+
+encoded = []
+
+for i in range(0,len(test_data)):
+    # z.append(testy[i])
+    test_new = test_data[i]
+    test_new = np.expand_dims(test_new, axis=0)
+    op = encoder_model.predict(test_new)
+  
+    encoded.append(op[0])
+
+
+X_embedded = TSNE(n_components=2,perplexity=20).fit_transform(np.array(encoded))
+X_embedded.shape
 
 
 xx = []
 yy = []
 z = []
 groupcolor = []
-for i in range(0,len(test_data)):
+for i in range(0,len(X_embedded)):
     # z.append(testy[i])
-    test = test_data[i]
+    test = X_embedded[i]
     test = np.expand_dims(test, axis=0)
-    op = encoder_model.predict(test)
+    
+    op = test
     xx.append(op[0][0])
     yy.append(op[0][1])
     z.append(test_data_y[i]) # Fall risk
