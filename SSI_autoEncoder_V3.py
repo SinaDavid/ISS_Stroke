@@ -406,12 +406,14 @@ df['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
 
 # fig3, (ax1,ax2,ax3,ax4) = plt.subplot2(nrows=2, ncols=2)
 fig3, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
-sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df )
-axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
 
+sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df)
+axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
+axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
 
 sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df )
 axes[0,1].set_title('Raw latent features per perturbation colored by subject')
+axes[0,1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
 
 # plt.figure(figsize=(8, 6))
 # sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=df)
@@ -421,6 +423,7 @@ meanDf = df.groupby(['groupcolor']).mean()
 
 sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf )
 axes[1,0].set_title('Average latent features colored by subject')
+axes[1,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
 
 
 # plt.figure(figsize=(8, 6))
@@ -432,6 +435,8 @@ meanDfwithFallRisk = df.groupby(['groupcolor','z']).mean()
 
 sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk )
 axes[1,1].set_title('Average latent features colored by fall risk')
+axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
+
 
 # plt.figure(figsize=(8, 6))
 # sns.scatterplot(x='xx', y='yy',hue='z', data=meanDfwithFallRisk)
