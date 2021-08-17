@@ -307,7 +307,7 @@ encoder_model.summary()
 ################### DECODER PART ############
 #  Changed dimensions to be mirrowed (Sina)
 
-decoder_input = tensorflow.keras.layers.Input(shape=(6))
+decoder_input = tensorflow.keras.layers.Input(shape=(6)) # probably change the (6) to (2)!
 decoder = tensorflow.keras.layers.Dense(64)(decoder_input)
 decoder = tensorflow.keras.layers.Reshape((1, 64))(decoder)
 decoder = tensorflow.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
