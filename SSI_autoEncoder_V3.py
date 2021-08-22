@@ -273,6 +273,7 @@ tensorflow.compat.v1.disable_eager_execution()
 
 
 
+
 input_data = tensorflow.keras.layers.Input(shape=(epochLength, 6))
 # input_data = tensorflow.keras.layers.Input(epochLength, 6)
 
@@ -293,10 +294,10 @@ encoder = tensorflow.keras.layers.Dense(16)(encoder)
 
 encoder = tensorflow.keras.layers.Dense(8)(encoder)
 
-encoder = tensorflow.keras.layers.Dense(2)(encoder)
+encoder = tensorflow.keras.layers.Dense(6)(encoder)
 
-distribution_mean = tensorflow.keras.layers.Dense(2, name='mean')(encoder)
-distribution_variance = tensorflow.keras.layers.Dense(2, name='log_variance')(encoder)
+distribution_mean = tensorflow.keras.layers.Dense(6, name='mean')(encoder)
+distribution_variance = tensorflow.keras.layers.Dense(6, name='log_variance')(encoder)
 latent_encoding = tensorflow.keras.layers.Lambda(sample_latent_features)([distribution_mean, distribution_variance])
 
 
@@ -307,7 +308,7 @@ encoder_model.summary()
 ################### DECODER PART ############
 #  Changed dimensions to be mirrowed (Sina)
 
-decoder_input = tensorflow.keras.layers.Input(shape=(6)) # probably change the (6) to (2)!
+decoder_input = tensorflow.keras.layers.Input(shape=(6))
 decoder = tensorflow.keras.layers.Dense(64)(decoder_input)
 decoder = tensorflow.keras.layers.Reshape((1, 64))(decoder)
 decoder = tensorflow.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
@@ -318,6 +319,7 @@ decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
 decoder = tensorflow.keras.layers.Conv1DTranspose(64, 5, activation='relu')(decoder)
 decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
 
+# decoder_output = tensorflow.keras.layers.Conv1DTranspose(6, 6, activation='relu')(decoder)
 
 decoder_output = tensorflow.keras.layers.Conv1DTranspose(6, 6)(decoder)
 decoder_output = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(decoder_output)
