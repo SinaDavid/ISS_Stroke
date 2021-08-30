@@ -124,114 +124,119 @@ inputColumns = [3,4,5,42,43,44]
 n_features = len(inputColumns)
 #inputTimeSerie = 'markerpos'
 ############# Loading the data ###############################
+import numpy as np
+X_data = np.load('H:\Documents\GitHub\ISS_Stroke\X_data.npy')
+y = np.load('H:\Documents\GitHub\ISS_Stroke\y_data.npy')
+group = np.load('H:\Documents\GitHub\ISS_Stroke\group.npy')
+# Don't need this part
 
-filename = []
-data = []
-#dataDir = 'D:\\Stroke_data\\V2_Data\\10sec\\ML_markervel\\ParYpsi\\'
-# dataDir1 = 'F:\\SSI_data\\10sec\\ML_markervel\\NonParCont\\' #--> 0.55
-# dataDir2 = 'F:\\SSI_data\\10sec\\ML_markervel\\ParCont\\'  #--> 0.39
-# dataDir3 = 'F:\\SSI_data\\10sec\\ML_markervel\\NonParYpsi\\' #--> 0.53
-dataDir4 = 'F:\\SSI_data\\10sec\\ML_markervel\\ParYpsi\\' #--> 0.52
-## Adding first data perturbation. ###
-#dataDir3 =  'F:\\SSI_data\\test\\'
+# filename = []
+# data = []
+# dataDir1 = 'C:\\Users\\sdd380\\surfdrive3\\Data_stroke\\ParYpsi\\'
+# # dataDir1 = 'F:\\SSI_data\\10sec\\ML_markervel\\NonParCont\\' #--> 0.55
+# # dataDir2 = 'F:\\SSI_data\\10sec\\ML_markervel\\ParCont\\'  #--> 0.39
+# # dataDir3 = 'F:\\SSI_data\\10sec\\ML_markervel\\NonParYpsi\\' #--> 0.53
+# # dataDir4 = 'F:\\SSI_data\\10sec\\ML_markervel\\ParYpsi\\' #--> 0.52
+# ## Adding first data perturbation. ###
+# #dataDir3 =  'F:\\SSI_data\\test\\'
 
-#dataDir4 = 'F:\\SSI_data\\V3_Data\\V3_Data\\10sec\\ML_markervel\\ParYpsi\\'
-#dataDir1 = 'F:\\SSI_data\\Vicon\\'
+# #dataDir4 = 'F:\\SSI_data\\V3_Data\\V3_Data\\10sec\\ML_markervel\\ParYpsi\\'
+# #dataDir1 = 'F:\\SSI_data\\Vicon\\'
 
 
-group = []
-numberPer = 0
-perturbationType = []
-if 'dataDir1' in locals():
-    for file1 in os.listdir(dataDir1):
-        data.append(spio.loadmat(dataDir1 + file1))
-        filename.append(file1)
-        group.append(int(file1[1:4]))
-        perturbationType.append(numberPer)
-    numberPer +=1
-if 'dataDir2' in locals():        
-    for file2 in os.listdir(dataDir2):
-        data.append(spio.loadmat(dataDir2 + file2))
-        filename.append(file2)
-        group.append(int(file2[1:4]))
-        perturbationType.append(numberPer)
-    numberPer +=1
-if 'dataDir3' in locals():         
-    for file3 in os.listdir(dataDir3):
-        data.append(spio.loadmat(dataDir3 + file3))
-        filename.append(file3)
-        group.append(int(file3[1:4]))
-        perturbationType.append(numberPer)
-    numberPer +=1
-if 'dataDir4' in locals():     
-    for file4 in os.listdir(dataDir4):
-        data.append(spio.loadmat(dataDir4 + file4))
-        filename.append(file4)
-        group.append(int(file4[1:4]))
-        perturbationType.append(numberPer)
-    numberPer +=1
+# group = []
+# numberPer = 0
+# perturbationType = []
+# if 'dataDir1' in locals():
+#     for file1 in os.listdir(dataDir1):
+#         data.append(spio.loadmat(dataDir1 + file1))
+#         filename.append(file1)
+#         group.append(int(file1[1:4]))
+#         perturbationType.append(numberPer)
+#     numberPer +=1
+# if 'dataDir2' in locals():        
+#     for file2 in os.listdir(dataDir2):
+#         data.append(spio.loadmat(dataDir2 + file2))
+#         filename.append(file2)
+#         group.append(int(file2[1:4]))
+#         perturbationType.append(numberPer)
+#     numberPer +=1
+# if 'dataDir3' in locals():         
+#     for file3 in os.listdir(dataDir3):
+#         data.append(spio.loadmat(dataDir3 + file3))
+#         filename.append(file3)
+#         group.append(int(file3[1:4]))
+#         perturbationType.append(numberPer)
+#     numberPer +=1
+# if 'dataDir4' in locals():     
+#     for file4 in os.listdir(dataDir4):
+#         data.append(spio.loadmat(dataDir4 + file4))
+#         filename.append(file4)
+#         group.append(int(file4[1:4]))
+#         perturbationType.append(numberPer)
+#     numberPer +=1
     
-## convert perturbationtype to length of perturbation signal
-perturbationsSeries = [] #np.zeros(epochLength)
-for indx in range(len(perturbationType)):
-    pert = np.ones(epochLength)*perturbationType[indx]
-    perturbationsSeries = np.hstack((perturbationsSeries,pert))
+# ## convert perturbationtype to length of perturbation signal
+# perturbationsSeries = [] #np.zeros(epochLength)
+# for indx in range(len(perturbationType)):
+#     pert = np.ones(epochLength)*perturbationType[indx]
+#     perturbationsSeries = np.hstack((perturbationsSeries,pert))
 
-perturbationsSeries = to_categorical(perturbationsSeries)
+# perturbationsSeries = to_categorical(perturbationsSeries)
 
-group = np.array(group)
+# group = np.array(group)
 
 
 
-# get the dict out of the list
-for numtrials in range(len(filename)):
-    data[numtrials] = (data[numtrials][inputTimeSerie])
+# # get the dict out of the list
+# for numtrials in range(len(filename)):
+#     data[numtrials] = (data[numtrials][inputTimeSerie])
 
-##### For different inputs, different handling of the data. 
-#### Stack the data of multiple trials on top of each other and perform normalisation.
+# ##### For different inputs, different handling of the data. 
+# #### Stack the data of multiple trials on top of each other and perform normalisation.
 
-if inputTimeSerie == 'markerpos': 
-    tempData = np.zeros(epochLength)
-    tempData1 = []
-    X_data = [0,0,0] #np.zeros((1001*177,3))
-    Norx = [0,0,0]
-    for indx in range(len(data)):
-        for j in range(0,3):
-            x = data[indx][0:epochLength,j+42]
-            test = (x-min(x))/(max(x)-min(x))
-            tempData = np.vstack((tempData,test))
-        tempData = np.delete(tempData, (0), axis=0)  
-        tempData = np.transpose(tempData)
-        X_data =  np.vstack((X_data,tempData))
-        tempData = np.zeros(epochLength)
+# if inputTimeSerie == 'markerpos': 
+#     tempData = np.zeros(epochLength)
+#     tempData1 = []
+#     X_data = [0,0,0] #np.zeros((1001*177,3))
+#     Norx = [0,0,0]
+#     for indx in range(len(data)):
+#         for j in range(0,3):
+#             x = data[indx][0:epochLength,j+42]
+#             test = (x-min(x))/(max(x)-min(x))
+#             tempData = np.vstack((tempData,test))
+#         tempData = np.delete(tempData, (0), axis=0)  
+#         tempData = np.transpose(tempData)
+#         X_data =  np.vstack((X_data,tempData))
+#         tempData = np.zeros(epochLength)
     
        
 
 
-if inputTimeSerie == 'markervel':
-   X_data = np.zeros(len(inputColumns))#[0,0,0]
-   for indx in range(len(data)):
-       x = data[indx][0:epochLength,inputColumns]
-       X_data = np.vstack((X_data,x))
+# if inputTimeSerie == 'markervel':
+#    X_data = np.zeros(len(inputColumns))#[0,0,0]
+#    for indx in range(len(data)):
+#        x = data[indx][0:epochLength,inputColumns]
+#        X_data = np.vstack((X_data,x))
        
 
-### Always remove first row (due to initialize issues)       
-X_data = np.delete(X_data, (0), axis=0) 
-### Normalize / scale input  && add perturbationSeries to the input ###
-X_data /=2
-# if numberPer > 1:
-#     X_data = np.hstack((X_data, perturbationsSeries))
-# if numberPer == 1:
-#     numberPer = 0    
+# ### Always remove first row (due to initialize issues)       
+# X_data = np.delete(X_data, (0), axis=0) 
+# ### Normalize / scale input  && add perturbationSeries to the input ###
+# X_data /=2
+# # if numberPer > 1:
+# #     X_data = np.hstack((X_data, perturbationsSeries))
+# # if numberPer == 1:
+# #     numberPer = 0    
 
 
 
-##### Get the dependent y data from filenames. #######
-y = [0]
-for indx in range(len(filename)):
-    x = filename[indx].split('FR')
-    y = np.vstack((y,int(x[1][0])))    
-y = np.delete(y,(0),axis=0)
+# ##### Get the dependent y data from filenames. #######
+# y = [0]
+# for indx in range(len(filename)):
+#     x = filename[indx].split('FR')
+#     y = np.vstack((y,int(x[1][0])))    
+# y = np.delete(y,(0),axis=0)
 
 ###### Make y a categorical value #####    
 y_cat = to_categorical(y)
@@ -341,7 +346,13 @@ autoencoder.compile(loss=get_loss(distribution_mean, distribution_variance), opt
 autoencoder.summary()
 
 
-history = autoencoder.fit(train_data, train_data, epochs=200, batch_size=64, validation_data=(test_data, test_data))
+# history = autoencoder.fit(train_data, train_data, epochs=200, batch_size=64, validation_data=(test_data, test_data))
+history = autoencoder.fit(train_data,
+                          train_data,
+                          epochs=200,
+                          batch_size=64,
+                          callbacks=[EarlyStopping(monitor='loss', patience=5)],
+                          validation_data=(test_data, test_data))
 
 plt.plot(history.history['val_loss'])
 
