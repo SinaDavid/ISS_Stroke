@@ -98,9 +98,9 @@ def sample_latent_features(distribution):
 ################# Settings over here! :-) #####################
 plt.close('all')
 inputTimeSerie = 'markerpos'
-path = 'F:\\SSI_data\\steadystate_prefSpeed\\steadystate_prefSpeed\\5GC\\markerpos\\'
-inputColumns = [18,19,20,21,22,23]
-
+path = 'F:\\SSI_data\\steadystate_prefSpeed\\5GC_200Frames\\5GC_200Frames\\markerpos\\'
+inputColumns = [12,13,14,15,16,17]#[18,19,20,21,22,23]
+windowLength = 200 # 5 gaitcyclus, normalized to 1000 and downsampled to 200
 
 
 # 2 Loading the data:  
@@ -118,23 +118,23 @@ if 'path' in locals():
         group.append(int(file1[1:4]))
     #     perturbationType.append(numberPer)
     # numberPer +=1
-
+group = np.array(group)
 # get the dict out of the list
 for numtrials in range(len(filename)):
-    data[numtrials] = (data[numtrials]['markervel'])
+    data[numtrials] = (data[numtrials]['markerpos'])
 
 
 # if inputTimeSerie == 'markervel':
-    X_data = np.zeros(len(inputColumns))#[0,0,0]
-    for indx in range(len(data)):
-        x = data[indx][0:1000,inputColumns]   # 
-        X_data = np.vstack((X_data,x))          
+X_data = np.zeros(len(inputColumns))#[0,0,0]
+for indx in range(len(data)):
+    x = data[indx][0:200,inputColumns]   # 
+    X_data = np.vstack((X_data,x))          
        
 
 # ### Always remove first row (due to initialize issues)       
 X_data = np.delete(X_data, (0), axis=0) 
 # To reduce data we resample with a factor 5. --> TBD
-X_data = X_data[::5]
+# X_data = X_data[::5]
 minimum = np.min(X_data)
 maximum = np.max(X_data)
 range1 = minimum - maximum
@@ -157,11 +157,13 @@ X_data /= range1
 
 ##### Get the dependent y data from filenames. #######
 y = [0]
+# group = []
 for indx in range(len(filename)):
     x = filename[indx].split('FR')
-    y = np.vstack((y,int(x[1][0])))    
+    y = np.vstack((y,int(x[1][0])))   
+    # group.append(int(filename[1:4]))
 y = np.delete(y,(0),axis=0)
-
+# group = np.array(group)
 
 ########    Reshape  the X data ############
 X_data = X_data.reshape(len(y),200,len(inputColumns))
@@ -171,8 +173,10 @@ X_data = X_data.reshape(len(y),200,len(inputColumns))
 ########### Split in train and test set ################
 train_data = X_data[np.arange(start=2,stop=np.shape(X_data)[0],step=2)]
 test_data = X_data[np.arange(start=1,stop=np.shape(X_data)[0],step=2)]
-
-
+train_data_y = y[np.arange(start=2,stop=np.shape(y)[0],step=2)]
+test_data_y = y[np.arange(start=1,stop=np.shape(y)[0],step=2)]
+train_data_group = group[np.arange(start=2,stop=np.shape(group)[0],step=2)]
+test_data_group = group[np.arange(start=1,stop=np.shape(group)[0],step=2)]
 
 
 ##############################################################################
@@ -260,9 +264,9 @@ plt.plot(history.history['val_loss'])
 
 # Next visualize the decoded data against original data.
 fig2, (ax1,ax2) = plt.subplots(nrows=2, ncols=1)
-ax1.plot(test_data[1])
+ax1.plot(test_data[0])
 # test = np.expand_dims(test_data[1],axis=(2,1))
-test = np.expand_dims(test_data[1], axis=0)
+test = np.expand_dims(test_data[0], axis=0)
 
 testPredicted = autoencoder.predict(test)
 testPredicted = testPredicted[0,:,:]
@@ -271,5 +275,92 @@ ax2.plot(testPredicted)
 
 
 
+#################### t-NSE ###########################
+# implement TSNE to be able to plot high dimensional data (TSNE is used for dimensionality reduction comparable to PCA)
+#https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
+
+from sklearn.manifold import TSNE
+
+encoded = []
+
+for i in range(0,len(test_data)):
+    # z.append(testy[i])
+    test_new = test_data[i]
+    test_new = np.expand_dims(test_new, axis=0)
+    op = encoder_model.predict(test_new)
+  
+    encoded.append(op[0])
+
+
+
+
+
+# perplexity is a factor to experiment with. A low perplexity is recommended for small datasets. perplexitiy ranges between 5 and 50
+X_embedded = TSNE(n_components=2,perplexity=13).fit_transform(np.array(encoded))
+X_embedded.shape
+
+
+################# Creating figures #####################
+# plot Latent feature clusters in scatterplot. 
+
+xx = []
+yy = []
+z = []
+groupcolor = []
+for i in range(0,len(X_embedded)):
+    # z.append(testy[i])
+    test = X_embedded[i]
+    test = np.expand_dims(test, axis=0)
+    
+    op = test
+    xx.append(op[0][0])
+    yy.append(op[0][1])
+    z.append(test_data_y[i]) # Fall risk
+
+import pandas as pd
+# import seaborn as sns
+import seaborn as sns
+
+df = pd.DataFrame()
+df['xx'] = xx
+df['yy'] = yy
+df['z'] = ["fall risk-"+str(k) for k in z]
+df['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
+
+
+# plt.figure(figsize=(8, 6))
+
+# fig3, (ax1,ax2,ax3,ax4) = plt.subplot2(nrows=2, ncols=2)
+fig3, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
+
+sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df)
+axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
+axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
+
+sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df )
+axes[0,1].set_title('Raw latent features per perturbation colored by subject')
+axes[0,1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
+
+# plt.figure(figsize=(8, 6))
+# sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=df)
+# plt.show()
+
+meanDf = df.groupby(['groupcolor']).mean()
+
+sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf )
+axes[1,0].set_title('Average latent features colored by subject')
+axes[1,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
+
+
+# plt.figure(figsize=(8, 6))
+# sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=meanDf)
+# plt.show()
+
+
+meanDfwithFallRisk = df.groupby(['groupcolor','z']).mean()
+
+sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk )
+axes[1,1].set_title('Average latent features colored by fall risk')
+axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
 
 

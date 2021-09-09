@@ -93,8 +93,8 @@ def sample_latent_features(distribution):
 
 ################# Settings over here! :-) #####################
 plt.close('all')
-inputTimeSerie = 'markerpos'
-path = 'F:\\SSI_data\\steadystate_prefSpeed\\steadystate_prefSpeed\\5GC\\markerpos\\'
+inputTimeSerie = 'markervel'
+path = 'F:\\SSI_data\\steadystate_prefSpeed\\steadystate_prefSpeed\\5GC\\markervel\\'
 inputColumns = [18,19,20,21,22,23]
 
 
@@ -117,13 +117,13 @@ if 'path' in locals():
 
 # get the dict out of the list
 for numtrials in range(len(filename)):
-    data[numtrials] = (data[numtrials]['markerpos'])
+    data[numtrials] = (data[numtrials][inputTimeSerie])
 
 
 # if inputTimeSerie == 'markervel':
 X_data = np.zeros(len(inputColumns))#[0,0,0]
 for indx in range(len(data)):
-    x = data[indx][0:200,inputColumns]   #             TEMPORARY CHANGE FROM 1000 TO 200 TO QUICKLY TEST
+    x = data[indx][0:200,inputColumns]   
     X_data = np.vstack((X_data,x))
        
 
