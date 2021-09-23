@@ -19,6 +19,16 @@ Version 0.1
 
 
 
+# important findings. The new dataset for 10seconds data can be learned.
+
+# The normalisation is of paramount importance. So far it seems that no normalisation is the best option....(zo weinig mogelijk massage aan de data)
+
+
+
+
+
+
+
 
 - Questions i come across, do we time normalize the gait cycles. (must be)
 
@@ -68,7 +78,6 @@ import tensorflow
 
 
 
-
 def get_loss(distribution_mean, distribution_variance):
     
     def get_reconstruction_loss(y_true, y_pred):
@@ -95,10 +104,42 @@ def sample_latent_features(distribution):
     return distribution_mean + tensorflow.exp(0.5 * distribution_variance) * random
 
 
+
+def fourierTransforming(signal, lineartaper = None, sampleFreq=20):
+        signal = (signal - signal.mean()) / signal.std()
+        signalLength = len(signal)                
+
+        # Apply linear taper of %5 at each end
+        if lineartaper :
+            int(signalLength * 0.05 )
+            signal[0:int(signalLength * 0.05 )] = (signal[0:int(signalLength * 0.05 )] / 20)
+            signal[signalLength - int(signalLength * 0.05): signalLength ] = signal[signalLength - int(signalLength * 0.05): signalLength ] / 20
+            
+        # add x amount of zeros so that the signal is 2^x
+        check = True
+        zeroscounter = 512
+        while (check == True):
+            if (signalLength > zeroscounter):
+                 zeroscounter = 2 * zeroscounter
+            else:
+                tot = zeroscounter - signalLength
+                check = False
+        signal = np.concatenate([signal, np.zeros(tot)]) 
+        ncor = len(signal)
+        
+        # Creates the necessairy frequenciees
+        fftsignal           = np.fft.fft(signal)
+        frequencies           = np.fft.fftfreq(ncor, sampleFreq)
+        power               = (abs(fftsignal) / ncor)
+        # mask                = frequencies > 0
+        return power
+
+
 ################# Settings over here! :-) #####################
 plt.close('all')
 inputTimeSerie = 'markervel'
 path = 'F:\\SSI_data\\steadystate_prefSpeed\\5GC_200Frames\\5GC_200Frames\\markervel\\'
+path = "F:\\SSI_data\\steadystate_prefSpeed\\Data4Python1\\Data4Python1\\steadystate_prefSpeed\\10sec\\" + inputTimeSerie + '\\'
 inputColumns = [18,19,20,21,22,23]
 windowLength = 200 # 5 gaitcyclus, normalized to 1000 and downsampled to 200
 
@@ -126,19 +167,50 @@ for numtrials in range(len(filename)):
 
 # if inputTimeSerie == 'markervel':
 X_data = np.zeros(len(inputColumns))#[0,0,0]
+X_dataFreq = np.zeros(len(inputColumns))
 for indx in range(len(data)):
+    signalFreq = np.zeros(200)
     x = data[indx][0:200,inputColumns]   # 
-    X_data = np.vstack((X_data,x))          
+    for i in range(0,5):
+        signal = x[:,i]
+        power = fourierTransforming(signal, lineartaper = None, sampleFreq=20)
+        signalFreq = np.vstack((signalFreq,power[0:200]))
+    X_data = np.vstack((X_data,x))     
+    X_dataFreq = np.vstack((X_dataFreq,np.transpose(signalFreq)))       
        
 
 # ### Always remove first row (due to initialize issues)       
 X_data = np.delete(X_data, (0), axis=0) 
-# To reduce data we resample with a factor 5. --> TBD
+X_dataFreq = np.delete(X_dataFreq, (0), axis=0) 
+
+##################################################################################################
+###### Activate the line below to feed the network with the signal in the frequency domain. ######
+# X_data = X_dataFreq
+##################################################################################################
+
+
+
+# To reduce data we resample with a factor 5. 
 # X_data = X_data[::5]
-minimum = np.min(X_data)
-maximum = np.max(X_data)
-range1 = minimum - maximum
-X_data /= range1
+# minimum = np.min(X_data)
+# maximum = np.max(X_data)
+# range1 = minimum - maximum
+# X_data /= range1
+# for indx in range(0,5):  
+#     print(indx)
+#     minimum = np.min(X_data[:,[indx,indx+3]])
+#     maximum = np.max(X_data[:,[indx,indx+3]])
+#     range1 = minimum - maximum
+#     X_data[:,[indx,indx+3]] /= range1
+# x_normed = X_data / X_data.max(axis=0)
+
+# for indx in range(0,5):  
+#     # print(indx)
+#     minimum = np.min(X_data[:,indx])
+#     maximum = np.max(X_data[:,indx])
+#     range1 = minimum - maximum
+#     X_data[:,indx] /= range1
+
 # ### Normalize / scale input  && add perturbationSeries to the input ###
 
 # X_data1 = scale(X_data)
@@ -206,10 +278,10 @@ encoder = tensorflow.keras.layers.Dense(16)(encoder)
 
 encoder = tensorflow.keras.layers.Dense(8)(encoder)
 
-encoder = tensorflow.keras.layers.Dense(6)(encoder)
+encoder = tensorflow.keras.layers.Dense(8)(encoder)
 encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
-distribution_mean = tensorflow.keras.layers.Dense(6, name='mean')(encoder)
-distribution_variance = tensorflow.keras.layers.Dense(6, name='log_variance')(encoder)
+distribution_mean = tensorflow.keras.layers.Dense(8, name='mean')(encoder)
+distribution_variance = tensorflow.keras.layers.Dense(8, name='log_variance')(encoder)
 latent_encoding = tensorflow.keras.layers.Lambda(sample_latent_features)([distribution_mean, distribution_variance])
 
 
@@ -218,7 +290,7 @@ encoder_model = tensorflow.keras.Model(input_data, latent_encoding)
 encoder_model.summary()
 
 ################### DECODER PART ############
-decoder_input = tensorflow.keras.layers.Input(shape=(6)) # probably change the (6) to (2)!
+decoder_input = tensorflow.keras.layers.Input(shape=(8)) # probably change the (6) to (2)!
 decoder = tensorflow.keras.layers.Dense(64)(decoder_input)
 decoder = tensorflow.keras.layers.Reshape((1, 64))(decoder)
 decoder = tensorflow.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
@@ -279,7 +351,7 @@ ax2.plot(testPredicted)
 # implement TSNE to be able to plot high dimensional data (TSNE is used for dimensionality reduction comparable to PCA)
 #https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
 
-from sklearn.manifold import TSNE
+# from sklearn.manifold import TSNE
 
 encoded = []
 
@@ -295,21 +367,95 @@ for i in range(0,len(test_data)):
 
 
 
-# perplexity is a factor to experiment with. A low perplexity is recommended for small datasets. perplexitiy ranges between 5 and 50
-X_embedded = TSNE(n_components=2,perplexity=13).fit_transform(np.array(encoded))
-X_embedded.shape
+# # perplexity is a factor to experiment with. A low perplexity is recommended for small datasets. perplexitiy ranges between 5 and 50
+# X_embedded = TSNE(n_components=2,perplexity=13).fit_transform(np.array(encoded))
+# X_embedded.shape
 
 
-################# Creating figures #####################
-# plot Latent feature clusters in scatterplot. 
+# ################# Creating figures #####################
+# # plot Latent feature clusters in scatterplot. 
+
+# xx = []
+# yy = []
+# z = []
+# groupcolor = []
+# for i in range(0,len(X_embedded)):
+#     # z.append(testy[i])
+#     test = X_embedded[i]
+#     test = np.expand_dims(test, axis=0)
+    
+#     op = test
+#     xx.append(op[0][0])
+#     yy.append(op[0][1])
+#     z.append(test_data_y[i]) # Fall risk
+
+import pandas as pd
+import seaborn as sns
+
+
+# df = pd.DataFrame()
+# df['xx'] = xx
+# df['yy'] = yy
+# df['z'] = ["fall risk-"+str(k) for k in z]
+# df['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
+
+
+# # plt.figure(figsize=(8, 6))
+
+# # fig3, (ax1,ax2,ax3,ax4) = plt.subplot2(nrows=2, ncols=2)
+# fig3, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
+
+# sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df)
+# axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
+# axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
+
+# sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df )
+# axes[0,1].set_title('Raw latent features per perturbation colored by subject')
+# axes[0,1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
+
+# plt.figure(figsize=(8, 6))
+# sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=df)
+# plt.show()
+
+# meanDf = df.groupby(['groupcolor']).mean()
+
+# sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf )
+# axes[1,0].set_title('Average latent features colored by subject')
+# axes[1,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
+
+
+# # plt.figure(figsize=(8, 6))
+# # sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=meanDf)
+# # plt.show()
+
+
+# meanDfwithFallRisk = df.groupby(['groupcolor','z']).mean()
+
+# sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk )
+# axes[1,1].set_title('Average latent features colored by fall risk')
+# axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
+
+
+
+####################### UMAP ###############################################
+import umap.umap_ as umap
+reducer = umap.UMAP()
+embedding = reducer.fit_transform(np.array(encoded))
+embedding.shape
+
+# plt.scatter(
+#     embedding[:, 0],
+#     embedding[:, 1])
+# plt.gca().set_aspect('equal', 'datalim')
+# plt.title('UMAP projection of the Penguin dataset', fontsize=24)
 
 xx = []
 yy = []
 z = []
 groupcolor = []
-for i in range(0,len(X_embedded)):
+for i in range(0,len(embedding)):
     # z.append(testy[i])
-    test = X_embedded[i]
+    test = embedding[i]
     test = np.expand_dims(test, axis=0)
     
     op = test
@@ -317,27 +463,20 @@ for i in range(0,len(X_embedded)):
     yy.append(op[0][1])
     z.append(test_data_y[i]) # Fall risk
 
-import pandas as pd
-# import seaborn as sns
-import seaborn as sns
-
-df = pd.DataFrame()
-df['xx'] = xx
-df['yy'] = yy
-df['z'] = ["fall risk-"+str(k) for k in z]
-df['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
+df1 = pd.DataFrame()
+df1['xx'] = embedding[:, 0]
+df1['yy'] = embedding[:, 1]
+df1['z'] = ["fall risk-"+str(k) for k in z]
+df1['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
 
 
-# plt.figure(figsize=(8, 6))
+fig4, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
 
-# fig3, (ax1,ax2,ax3,ax4) = plt.subplot2(nrows=2, ncols=2)
-fig3, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
-
-sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df)
+sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df1)
 axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
 axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
 
-sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df )
+sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df1 )
 axes[0,1].set_title('Raw latent features per perturbation colored by subject')
 axes[0,1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
 
@@ -345,9 +484,9 @@ axes[0,1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
 # sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=df)
 # plt.show()
 
-meanDf = df.groupby(['groupcolor']).mean()
+meanDf1 = df1.groupby(['groupcolor']).mean()
 
-sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf )
+sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf1 )
 axes[1,0].set_title('Average latent features colored by subject')
 axes[1,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
 
@@ -357,9 +496,9 @@ axes[1,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
 # plt.show()
 
 
-meanDfwithFallRisk = df.groupby(['groupcolor','z']).mean()
+meanDfwithFallRisk1 = df1.groupby(['groupcolor','z']).mean()
 
-sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk )
+sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk1 )
 axes[1,1].set_title('Average latent features colored by fall risk')
 axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
 
