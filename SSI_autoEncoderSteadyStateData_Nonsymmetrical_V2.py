@@ -18,6 +18,11 @@ Version 0.1
 
 
 
+To Do 
+
+download correctly mirrored data for 10 seconds. and apply
+
+
 
 
 - Questions i come across, do we time normalize the gait cycles. (must be)
@@ -97,10 +102,15 @@ def sample_latent_features(distribution):
 
 ################# Settings over here! :-) #####################
 plt.close('all')
-inputTimeSerie = 'markerpos'
-path = 'F:\\SSI_data\\steadystate_prefSpeed\\5GC_200Frames\\5GC_200Frames\\markerpos\\'
-inputColumns = [12,13,14,15,16,17]#[18,19,20,21,22,23]
-windowLength = 200 # 5 gaitcyclus, normalized to 1000 and downsampled to 200
+inputTimeSerie = 'markervel'
+path = 'F:\\SSI_data\\steadystate_prefSpeed\\5GC_200Frames\\5GC_200Frames\\'+ inputTimeSerie + '\\'
+path = "F:\\SSI_data\\steadystate_prefSpeed\\Data4Python1\\Data4Python1\\steadystate_prefSpeed\\5GC_200Frames\\" + inputTimeSerie + '\\'
+# path = 'F:\\SSI_data\\steadystate_prefSpeed\\10sec\\10sec\\markervel\\'
+# path = 'F:\\SSI_data\\steadystate_prefSpeed\\steadystate_prefSpeed\\10sec\\markervel\\' # wrong but curious.
+inputColumns = [12,13,14,15,16,17]#[18,19,20,21,22,23] # ankle markers
+# inputColumns = [0,1,2,3,4,5,6,7,8,9,10,11] # pelvic markers
+InputWindowLength = 200 # 5 gaitcyclus, normalized to 1000 and downsampled to 200
+windowLength = 200
 
 
 # 2 Loading the data:  
@@ -121,33 +131,42 @@ if 'path' in locals():
 group = np.array(group)
 # get the dict out of the list
 for numtrials in range(len(filename)):
-    data[numtrials] = (data[numtrials]['markerpos'])
+    data[numtrials] = (data[numtrials][inputTimeSerie])
 
 
 # if inputTimeSerie == 'markervel':
 X_data = np.zeros(len(inputColumns))#[0,0,0]
 for indx in range(len(data)):
-    x = data[indx][0:200,inputColumns]   # 
+    x = data[indx][0:InputWindowLength,inputColumns]   # 
     X_data = np.vstack((X_data,x))          
        
 
 # ### Always remove first row (due to initialize issues)       
 X_data = np.delete(X_data, (0), axis=0) 
-# To reduce data we resample with a factor 5. --> TBD
-# X_data = X_data[::5]
-minimum = np.min(X_data)
-maximum = np.max(X_data)
-range1 = minimum - maximum
-X_data /= range1
-# ### Normalize / scale input  && add perturbationSeries to the input ###
+# To reduce data we resample with a factor 5.
+if InputWindowLength != windowLength:
+    X_data = X_data[::5] #% Sina did this in preparation.
 
-# X_data1 = scale(X_data)
-# X_data /=2
-# X_scaled = scale(X_data, -1, 1)
-# # if numberPer > 1:
-# #     X_data = np.hstack((X_data, perturbationsSeries))
-# # if numberPer == 1:
-# #     numberPer = 0    
+# ### Normalize / scale input 
+
+# if input ==0: # ankle
+for indx in range(0,3):  
+    print(indx)
+    minimum = np.min(X_data[:,[indx,indx+3]])
+    maximum = np.max(X_data[:,[indx,indx+3]])
+    range1 = minimum - maximum
+    X_data[:,[indx,indx+3]] /= range1
+
+# X_data_new = np.zeros(np.shape((X_data[:,[0,1,2]])))
+# if input ==1: # Pelvic
+#     for indx in range(0,len(X_data)):
+#         X_data_new[indx,0]=np.mean(X_data[indx,[0,3,6,9]])
+#         X_data_new[indx,1]=np.mean(X_data[indx,[1,4,7,10]])
+#         X_data_new[indx,2]=np.mean(X_data[indx,[2,5,8,11]])
+    # average markers
+    # normalize accordingly (maybe)
+
+  
 
 
 
@@ -165,18 +184,21 @@ for indx in range(len(filename)):
 y = np.delete(y,(0),axis=0)
 # group = np.array(group)
 
+
+
 ########    Reshape  the X data ############
-X_data = X_data.reshape(len(y),200,len(inputColumns))
 
 
+
+X_data = X_data.reshape(len(y),windowLength,len(inputColumns))
 
 ########### Split in train and test set ################
-train_data = X_data[np.arange(start=2,stop=np.shape(X_data)[0],step=2)]
-test_data = X_data[np.arange(start=1,stop=np.shape(X_data)[0],step=2)]
-train_data_y = y[np.arange(start=2,stop=np.shape(y)[0],step=2)]
-test_data_y = y[np.arange(start=1,stop=np.shape(y)[0],step=2)]
-train_data_group = group[np.arange(start=2,stop=np.shape(group)[0],step=2)]
-test_data_group = group[np.arange(start=1,stop=np.shape(group)[0],step=2)]
+train_data = X_data[np.arange(start=1,stop=np.shape(X_data)[0],step=2)]
+test_data = X_data[np.arange(start=2,stop=np.shape(X_data)[0],step=2)]
+train_data_y = y[np.arange(start=1,stop=np.shape(y)[0],step=2)]
+test_data_y = y[np.arange(start=2,stop=np.shape(y)[0],step=2)]
+train_data_group = group[np.arange(start=1,stop=np.shape(group)[0],step=2)]
+test_data_group = group[np.arange(start=2,stop=np.shape(group)[0],step=2)]
 
 
 ##############################################################################
@@ -200,25 +222,23 @@ encoder = tensorflow.keras.layers.MaxPooling1D(2)(encoder)
 encoder = tensorflow.keras.layers.Conv1D(32, 3, activation='relu')(encoder)
 # encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
 encoder = tensorflow.keras.layers.MaxPooling1D(2)(encoder)
-
 encoder = tensorflow.keras.layers.Flatten()(encoder)
 encoder = tensorflow.keras.layers.Dense(16)(encoder)
 
 encoder = tensorflow.keras.layers.Dense(8)(encoder)
 
-encoder = tensorflow.keras.layers.Dense(6)(encoder)
+encoder = tensorflow.keras.layers.Dense(3)(encoder)
 encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
-distribution_mean = tensorflow.keras.layers.Dense(6, name='mean')(encoder)
-distribution_variance = tensorflow.keras.layers.Dense(6, name='log_variance')(encoder)
+distribution_mean = tensorflow.keras.layers.Dense(3, name='mean')(encoder)
+distribution_variance = tensorflow.keras.layers.Dense(3, name='log_variance')(encoder)
 latent_encoding = tensorflow.keras.layers.Lambda(sample_latent_features)([distribution_mean, distribution_variance])
-
 
 
 encoder_model = tensorflow.keras.Model(input_data, latent_encoding)
 encoder_model.summary()
 
 ################### DECODER PART ############
-decoder_input = tensorflow.keras.layers.Input(shape=(6)) # probably change the (6) to (2)!
+decoder_input = tensorflow.keras.layers.Input(shape=(3)) # probably change the (6) to (2)!
 decoder = tensorflow.keras.layers.Dense(64)(decoder_input)
 decoder = tensorflow.keras.layers.Reshape((1, 64))(decoder)
 decoder = tensorflow.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
@@ -229,23 +249,19 @@ decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
 decoder = tensorflow.keras.layers.Conv1DTranspose(64, 5, activation='relu')(decoder)
 decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
 
-
 decoder_output = tensorflow.keras.layers.Conv1DTranspose(6, 6)(decoder)
 decoder_output = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(decoder_output)
-
-
 
 decoder_model = tensorflow.keras.Model(decoder_input, decoder_output)
 print("\ndecoder summary")
 decoder_model.summary()
-
 encoded = encoder_model(input_data)
 decoded = decoder_model(encoded)
-
-
 autoencoder = tensorflow.keras.models.Model(input_data, decoded)
 
 
+
+############# Now start compiling the model ######################
 autoencoder.compile(loss=get_loss(distribution_mean, distribution_variance), optimizer='adam')
 print("\nautoenoder summary")
 autoencoder.summary()
@@ -256,7 +272,7 @@ history = autoencoder.fit(train_data,
                           train_data,
                           epochs=200,
                           batch_size=64,
-                          callbacks=[EarlyStopping(monitor='loss', patience=5)],
+                          callbacks=[EarlyStopping(monitor='loss', patience=8)],
                           validation_data=(test_data, test_data))
 
 plt.plot(history.history['val_loss'])

@@ -99,6 +99,7 @@ def sample_latent_features(distribution):
 plt.close('all')
 inputTimeSerie = 'markervel'
 path = 'F:\\SSI_data\\steadystate_prefSpeed\\5GC_200Frames\\5GC_200Frames\\markervel\\'
+path = "F:\\SSI_data\\steadystate_prefSpeed\\Data4Python1\\Data4Python1\\steadystate_prefSpeed\\10sec\\" + inputTimeSerie + '\\'
 inputColumns = [18,19,20,21,22,23]
 windowLength = 200 # 5 gaitcyclus, normalized to 1000 and downsampled to 200
 
