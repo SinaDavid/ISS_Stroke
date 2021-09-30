@@ -271,24 +271,24 @@ tensorflow.compat.v1.disable_eager_execution()
 input_data = tensorflow.keras.layers.Input(shape=(200, 6))
 # input_data = tensorflow.keras.layers.Input(epochLength, 6)
 
-encoder = tensorflow.keras.layers.Conv1D(64, 5,activation='relu',kernel_initializer=tf.keras.initializers.zeros())(input_data)
+encoder = tensorflow.keras.layers.Conv1D(64, 5,activation='relu',kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=1))(input_data)
 # encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
 encoder = tensorflow.keras.layers.MaxPooling1D(2)(encoder)
 
-encoder = tensorflow.keras.layers.Conv1D(64, 3,activation='relu')(encoder)
+encoder = tensorflow.keras.layers.Conv1D(64, 3,activation='relu',kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=1))(encoder)
 # encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
 encoder = tensorflow.keras.layers.MaxPooling1D(2)(encoder)
 
-encoder = tensorflow.keras.layers.Conv1D(32, 3, activation='relu')(encoder)
+encoder = tensorflow.keras.layers.Conv1D(32, 3, activation='relu',kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=1))(encoder)
 # encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
 encoder = tensorflow.keras.layers.MaxPooling1D(2)(encoder)
 
 encoder = tensorflow.keras.layers.Flatten()(encoder)
-encoder = tensorflow.keras.layers.Dense(16)(encoder)
+encoder = tensorflow.keras.layers.Dense(16,kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=1))(encoder)
 
-encoder = tensorflow.keras.layers.Dense(8)(encoder)
+encoder = tensorflow.keras.layers.Dense(8,kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=1))(encoder)
 
-encoder = tensorflow.keras.layers.Dense(8)(encoder)
+encoder = tensorflow.keras.layers.Dense(8,kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=1))(encoder)
 encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
 distribution_mean = tensorflow.keras.layers.Dense(8, name='mean')(encoder)
 distribution_variance = tensorflow.keras.layers.Dense(8, name='log_variance')(encoder)
