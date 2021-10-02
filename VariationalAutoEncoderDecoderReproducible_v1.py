@@ -79,8 +79,8 @@ from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,LeaveO
                                      StratifiedKFold, GroupShuffleSplit,
                                      GroupKFold, StratifiedShuffleSplit)
 
-
-seed_value= 0
+from keras import backend as K
+K.clear_session()
 # import tensorflow
 # from numpy.random import seed
 # seed(0)
@@ -93,7 +93,7 @@ seed_value= 0
 
 # Seed value
 # Apparently you may use different seed values at each stage
-seed_value= 0
+seed_value= 1
 
 # 1. Set the `PYTHONHASHSEED` environment variable at a fixed value
 import os
@@ -114,18 +114,19 @@ tf.random.set_seed(seed_value)
 # tf.compat.v1.set_random_seed(seed_value)
 
 # 5. Configure a new global `tensorflow` session
-from keras import backend as K
+# from keras import backend as K
 # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
 # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 # K.set_session(sess)
 # for later versions:
 session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
 sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
-tf.compat.v1.keras.backend.set_session(sess)
+# tf.compat.v1.keras.backend.set_session(sess)
 
 
 
-
+# from keras import backend as K
+# K.set_session(sess)
 
 
 
@@ -136,13 +137,13 @@ tf.compat.v1.keras.backend.set_session(sess)
 def get_loss(distribution_mean, distribution_variance):
     
     def get_reconstruction_loss(y_true, y_pred):
-        reconstruction_loss = tensorflow.keras.losses.mse(y_true, y_pred)
-        reconstruction_loss_batch = tensorflow.reduce_mean(reconstruction_loss)
+        reconstruction_loss = tf.keras.losses.mse(y_true, y_pred)
+        reconstruction_loss_batch = tf.reduce_mean(reconstruction_loss)
         return reconstruction_loss_batch*28*28
     
     def get_kl_loss(distribution_mean, distribution_variance):
-        kl_loss = 1 + distribution_variance - tensorflow.square(distribution_mean) - tensorflow.exp(distribution_variance)
-        kl_loss_batch = tensorflow.reduce_mean(kl_loss)
+        kl_loss = 1 + distribution_variance - tf.square(distribution_mean) - tf.exp(distribution_variance)
+        kl_loss_batch = tf.reduce_mean(kl_loss)
         return kl_loss_batch*(-0.5)
     
     def total_loss(y_true, y_pred):
@@ -154,9 +155,9 @@ def get_loss(distribution_mean, distribution_variance):
 
 def sample_latent_features(distribution):
     distribution_mean, distribution_variance = distribution
-    batch_size = tensorflow.shape(distribution_variance)[0]
-    random = tensorflow.keras.backend.random_normal(shape=(batch_size, tensorflow.shape(distribution_variance)[1]))
-    return distribution_mean + tensorflow.exp(0.5 * distribution_variance) * random
+    batch_size = tf.shape(distribution_variance)[0]
+    random = tf.keras.backend.random_normal(shape=(batch_size, tf.shape(distribution_variance)[1]))
+    return distribution_mean + tf.exp(0.5 * distribution_variance) * random
 
 
 
@@ -311,58 +312,62 @@ test_data_group = group[np.arange(start=1,stop=np.shape(group)[0],step=2)]
 ##############################################################################
 
 
-tensorflow.compat.v1.disable_eager_execution()
+tf.compat.v1.disable_eager_execution()
 
-input_data = tensorflow.keras.layers.Input(shape=(200, 6))
+input_data = tf.keras.layers.Input(shape=(200, 6))
 # input_data = tensorflow.keras.layers.Input(epochLength, 6)
 
-encoder = tensorflow.keras.layers.Conv1D(64, 5,activation='relu',kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=0))(input_data)
+encoder = tf.keras.layers.Conv1D(64, 5,activation='relu',name='sina1')(input_data)
+
 # encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
-encoder = tensorflow.keras.layers.MaxPooling1D(2)(encoder)
+encoder = tf.keras.layers.MaxPooling1D(2)(encoder)
 
-encoder = tensorflow.keras.layers.Conv1D(64, 3,activation='relu',kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=0))(encoder)
+encoder = tf.keras.layers.Conv1D(64, 3,activation='relu',name='sina2')(encoder)
 # encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
-encoder = tensorflow.keras.layers.MaxPooling1D(2)(encoder)
+encoder = tf.keras.layers.MaxPooling1D(2)(encoder)
 
-encoder = tensorflow.keras.layers.Conv1D(32, 3, activation='relu',kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=0))(encoder)
+encoder = tf.keras.layers.Conv1D(32, 3, activation='relu',name='sina3')(encoder)
 # encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
-encoder = tensorflow.keras.layers.MaxPooling1D(2)(encoder)
+encoder = tf.keras.layers.MaxPooling1D(2)(encoder)
 
-encoder = tensorflow.keras.layers.Flatten()(encoder)
-encoder = tensorflow.keras.layers.Dense(16,kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=0))(encoder)
+encoder = tf.keras.layers.Flatten()(encoder)
+encoder = tf.keras.layers.Dense(16,name='sina4')(encoder)
 
-encoder = tensorflow.keras.layers.Dense(8,kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=0))(encoder)
+encoder = tf.keras.layers.Dense(8,name='sina5')(encoder)
 
-encoder = tensorflow.keras.layers.Dense(8,kernel_initializer=tf.keras.initializers.TruncatedNormal(mean=0.0, stddev=0.05, seed=0))(encoder)
-encoder = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(encoder)
-distribution_mean = tensorflow.keras.layers.Dense(8, name='mean')(encoder)
-distribution_variance = tensorflow.keras.layers.Dense(8, name='log_variance')(encoder)
-latent_encoding = tensorflow.keras.layers.Lambda(sample_latent_features)([distribution_mean, distribution_variance])
+encoder = tf.keras.layers.Dense(8,name='sina6')(encoder)
+encoder = tf.keras.layers.LeakyReLU(alpha=0.1)(encoder)
+distribution_mean = tf.keras.layers.Dense(8, name='mean')(encoder)
+distribution_variance = tf.keras.layers.Dense(8, name='log_variance')(encoder)
+latent_encoding = tf.keras.layers.Lambda(sample_latent_features)([distribution_mean, distribution_variance])
 
 
 
-encoder_model = tensorflow.keras.Model(input_data, latent_encoding)
+encoder_model = tf.keras.Model(input_data, latent_encoding)
 encoder_model.summary()
+weights = encoder_model.get_weights()
+# encoder_model.get_layer('sina1').set_weights([np.ones(np.shape(weights[0]))*0.5,np.zeros(np.shape(weights[1]))])
+# weights1 = encoder_model.get_weights()
 
 ################### DECODER PART ############
-decoder_input = tensorflow.keras.layers.Input(shape=(8)) # probably change the (6) to (2)!
-decoder = tensorflow.keras.layers.Dense(64)(decoder_input)
-decoder = tensorflow.keras.layers.Reshape((1, 64))(decoder)
-decoder = tensorflow.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
+decoder_input = tf.keras.layers.Input(shape=(8)) # probably change the (6) to (2)!
+decoder = tf.keras.layers.Dense(64)(decoder_input)
+decoder = tf.keras.layers.Reshape((1, 64))(decoder)
+decoder = tf.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
 
-decoder = tensorflow.keras.layers.Conv1DTranspose(32, 5, activation='relu')(decoder)
-decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
+decoder = tf.keras.layers.Conv1DTranspose(32, 5, activation='relu')(decoder)
+decoder = tf.keras.layers.UpSampling1D(5)(decoder)
 
-decoder = tensorflow.keras.layers.Conv1DTranspose(64, 5, activation='relu')(decoder)
-decoder = tensorflow.keras.layers.UpSampling1D(5)(decoder)
-
-
-decoder_output = tensorflow.keras.layers.Conv1DTranspose(6, 6)(decoder)
-decoder_output = tensorflow.keras.layers.LeakyReLU(alpha=0.1)(decoder_output)
+decoder = tf.keras.layers.Conv1DTranspose(64, 5, activation='relu')(decoder)
+decoder = tf.keras.layers.UpSampling1D(5)(decoder)
 
 
+decoder_output = tf.keras.layers.Conv1DTranspose(6, 6)(decoder)
+decoder_output = tf.keras.layers.LeakyReLU(alpha=0.1)(decoder_output)
 
-decoder_model = tensorflow.keras.Model(decoder_input, decoder_output)
+
+
+decoder_model = tf.keras.Model(decoder_input, decoder_output)
 print("\ndecoder summary")
 decoder_model.summary()
 
@@ -370,7 +375,7 @@ encoded = encoder_model(input_data)
 decoded = decoder_model(encoded)
 
 
-autoencoder = tensorflow.keras.models.Model(input_data, decoded)
+autoencoder = tf.keras.models.Model(input_data, decoded)
 
 
 autoencoder.compile(loss=get_loss(distribution_mean, distribution_variance), optimizer='adam')
@@ -558,3 +563,18 @@ axes[1,1].set_title('Average latent features colored by fall risk')
 axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
 
 
+
+
+############# Encoder model saving stuff ######################
+
+# encoder_model.save('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\' + 'model1')
+
+
+# loaded = tf.saved_model.load('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\' + 'model1')
+
+
+# encoder_model.get_layer('sina1').set_weights(loaded.variables.weights[0])
+#loaded.variables.weights[0]
+#a = tf.constant([[1, 2], [3, 4]])   
+#b = tf.add(a, 1)
+#out = tf.multiply(a, b)
