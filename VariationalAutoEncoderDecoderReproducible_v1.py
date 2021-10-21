@@ -79,30 +79,20 @@ from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,LeaveO
                                      StratifiedKFold, GroupShuffleSplit,
                                      GroupKFold, StratifiedShuffleSplit)
 
+import matplotlib.pyplot as plt
+plt.close('all')
+
 from keras import backend as K
 K.clear_session()
-# import tensorflow
-# from numpy.random import seed
-# seed(0)
-# # from tensorflow import set_random_seed
-# # set_random_seed(2)
-# import tensorflow
-# tensorflow.random.set_seed(2)
-# import tensorflow as tf
 
-
-# Seed value
 # Apparently you may use different seed values at each stage
 seed_value= 1
-
 # 1. Set the `PYTHONHASHSEED` environment variable at a fixed value
 import os
 os.environ['PYTHONHASHSEED']=str(seed_value)
-
 # 2. Set the `python` built-in pseudo-random generator at a fixed value
 import random
 random.seed(seed_value)
-
 # 3. Set the `numpy` pseudo-random generator at a fixed value
 # import numpy as np
 np.random.seed(seed_value)
@@ -246,39 +236,6 @@ X_dataFreq = np.delete(X_dataFreq, (0), axis=0)
 
 
 
-# To reduce data we resample with a factor 5. 
-# X_data = X_data[::5]
-# minimum = np.min(X_data)
-# maximum = np.max(X_data)
-# range1 = minimum - maximum
-# X_data /= range1
-# for indx in range(0,5):  
-#     print(indx)
-#     minimum = np.min(X_data[:,[indx,indx+3]])
-#     maximum = np.max(X_data[:,[indx,indx+3]])
-#     range1 = minimum - maximum
-#     X_data[:,[indx,indx+3]] /= range1
-# x_normed = X_data / X_data.max(axis=0)
-# X_data = x_normed
-# for indx in range(0,5):  
-#     # print(indx)
-#     minimum = np.min(X_data[:,indx])
-#     maximum = np.max(X_data[:,indx])
-#     range1 = minimum - maximum
-#     X_data[:,indx] /= range1
-
-# ### Normalize / scale input  && add perturbationSeries to the input ###
-
-# X_data1 = scale(X_data)
-# X_data /=2
-# X_scaled = scale(X_data, -1, 1)
-# # if numberPer > 1:
-# #     X_data = np.hstack((X_data, perturbationsSeries))
-# # if numberPer == 1:
-# #     numberPer = 0    
-
-
-
 
 
 
@@ -337,8 +294,8 @@ encoder = tf.keras.layers.Dense(8,name='sina5')(encoder)
 
 encoder = tf.keras.layers.Dense(8,name='sina6')(encoder)
 encoder = tf.keras.layers.LeakyReLU(alpha=0.1)(encoder)
-distribution_mean = tf.keras.layers.Dense(8, name='mean')(encoder)
-distribution_variance = tf.keras.layers.Dense(8, name='log_variance')(encoder)
+distribution_mean = tf.keras.layers.Dense(6, name='mean')(encoder)
+distribution_variance = tf.keras.layers.Dense(6, name='log_variance')(encoder)
 latent_encoding = tf.keras.layers.Lambda(sample_latent_features)([distribution_mean, distribution_variance])
 
 
@@ -350,7 +307,7 @@ weights = encoder_model.get_weights()
 # weights1 = encoder_model.get_weights()
 
 ################### DECODER PART ############
-decoder_input = tf.keras.layers.Input(shape=(8)) # probably change the (6) to (2)!
+decoder_input = tf.keras.layers.Input(shape=(6)) # probably change the (6) to (2)!
 decoder = tf.keras.layers.Dense(64)(decoder_input)
 decoder = tf.keras.layers.Reshape((1, 64))(decoder)
 decoder = tf.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
@@ -499,7 +456,7 @@ plt.plot(np.array(encoded))
 
 ####################### UMAP ###############################################
 import umap.umap_ as umap
-reducer = umap.UMAP()
+reducer = umap.UMAP(random_state=42)
 embedding = reducer.fit_transform(np.array(encoded))
 embedding.shape
 
@@ -568,13 +525,172 @@ axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
 ############# Encoder model saving stuff ######################
 
 # encoder_model.save('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\' + 'model1')
-
+# decoder_model.save('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\')
 
 # loaded = tf.saved_model.load('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\' + 'model1')
 
+##### Describing the signal (encoded) #####
+features = np.array(encoded)
+meanFeatures = np.mean(features,axis=0)
+sdFeatures = np.std(features,axis=0)
+encooo = []
+for indx in range(0,6):
+    encodedNOr = [meanFeatures[indx] - 2*sdFeatures[indx], meanFeatures[indx] - sdFeatures[indx], meanFeatures[indx], meanFeatures[indx] + sdFeatures[indx], meanFeatures[indx] + 2*sdFeatures[indx]]
+    encooo.append(encodedNOr)
+encooo = np.round(encooo,0)
+pathFeatures = 'C:\\Users\\michi\\Desktop\\SSI_Stroke\\features\\features'
+np.save(pathFeatures,encooo)
 
-# encoder_model.get_layer('sina1').set_weights(loaded.variables.weights[0])
-#loaded.variables.weights[0]
-#a = tf.constant([[1, 2], [3, 4]])   
-#b = tf.add(a, 1)
-#out = tf.multiply(a, b)
+
+
+################################################################
+################################################################
+################################################################
+################################################################
+############### UMAP INVERSE ###################################
+################################################################
+################################################################
+################################################################
+x = []
+y = []
+# Define the corners ##
+corners = np.array([
+    [-3, 4],  # 1
+    [-3, -1.5],  # 7
+    [15, 15],  # 2
+    [15, 0],  # 0
+])
+#### Create array within the defined corners 
+test_pts = np.array([
+    (corners[0]*(1-x) + corners[1]*x)*(1-y) +
+    (corners[2]*(1-x) + corners[3]*x)*y
+    for y in np.linspace(0, 1, 10)
+    for x in np.linspace(0, 1, 10)
+])
+
+
+
+
+### Calculate the inverse ###
+inv_transformed_points = reducer.inverse_transform(test_pts)
+
+
+import tensorflow as tf
+from keras import backend as K
+
+# K.clear_session()
+
+
+pathToEncoderModel = 'C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\'
+# model = keras.models.load_model(pathToEncoderModel, compile=False)
+
+from keras.models import load_model
+model = load_model(pathToEncoderModel)
+
+dummySignals = np.zeros((200,6))
+for indx in range(0,100):
+    dummyData = np.expand_dims(inv_transformed_points[indx], axis=0)
+    prediction = model.predict(dummyData)
+    predictiondim = prediction.reshape(200,6) #np.squeeze(prediction, axis=(2,))
+    dummySignals = np.vstack((dummySignals,predictiondim))
+    # dummySignals = predictiondim
+
+
+minimum1 = []
+minimum4 = []
+maximum1 = []
+maximum4 = []
+freqMaxPower = []
+freqRes = 20/200
+
+for indx in np.arange(200, len(dummySignals),200, dtype=None):
+    # print (indx)
+    minimum1 = np.append(minimum1, np.min(dummySignals[indx:indx+200,1]))
+    maximum1 = np.append(maximum1, np.max(dummySignals[indx:indx+200,1]))
+    minimum4 = np.append(minimum4, np.min(dummySignals[indx:indx+200,4]))
+    maximum4 = np.append(maximum4, np.max(dummySignals[indx:indx+200,4]))
+    power = fourierTransforming(dummySignals[indx:indx+200,1], lineartaper = None, sampleFreq=20)
+    maximumPower = freqRes * np.where(power==np.max(power))[0][0]
+    freqMaxPower = np.append(freqMaxPower,maximumPower)
+
+
+### Final features ####
+range1 = maximum1 - minimum1
+range4 = maximum4 - minimum4
+symmetryRatio = maximum1 / maximum4
+freqMaxPower = freqMaxPower
+
+
+
+
+
+
+
+
+fig1,axs = plt.subplots()
+sns.scatterplot(ax=axs,x='xx', y='yy',hue='z', data=df1)
+
+
+
+
+
+# from matplotlib import pyplot as PLT
+from matplotlib import cm as CM
+from matplotlib import mlab as ML
+import numpy as NP
+
+# n = 1e5
+# x = y = NP.linspace(-5, 5, 100)
+# X, Y = NP.meshgrid(x, y)
+# Z1 = ML.bivariate_normal(X, Y, 2, 2, 0, 0)
+# Z2 = ML.bivariate_normal(X, Y, 4, 1, 1, 1)
+# ZD = Z2 - Z1
+# x = X.ravel()
+# y = Y.ravel()
+# z = ZD.ravel()
+# gridsize=30
+# PLT.subplot(111)
+
+# if 'bins=None', then color of each hexagon corresponds directly to its count
+# 'C' is optional--it maps values to x-y coordinates; if 'C' is None (default) then 
+# the result is a pure 2D histogram 
+
+plt.hexbin(test_pts[:,0], test_pts[:,1], C=symmetryRatio, cmap=CM.jet, bins=None)
+# PLT.axis([x.min(), x.max(), y.min(), y.max()])
+
+cb = plt.colorbar()
+cb.set_label('mean value')
+plt.show()   
+
+
+
+
+
+df1.loc[df1['z'] == 'fall risk-[1]', 'z'] = 'orange'
+df1.loc[df1['z'] == 'fall risk-[0]', 'z'] = 'blue'
+################# Thursday 21/10/2021  ################
+fig = plt.figure(10)
+# fig, axes = plt.subplots(2, 2)
+
+fig = plt.figure(11)
+ax1 = fig.add_subplot(221)
+ax1.title.set_text('Umap 2d')
+plt.scatter(df1['xx'], df1['yy'], c=df1['z'])
+# axes[1,0]
+ax2 = fig.add_subplot(222)
+ax2.title.set_text('Symmetry ratio')
+plt.hexbin(test_pts[:,0], test_pts[:,1], C=symmetryRatio, cmap=CM.jet, bins=None)
+
+ax3 = fig.add_subplot(223)
+ax3.title.set_text('Range of Motion')
+plt.hexbin(test_pts[:,0], test_pts[:,1], C=range1, cmap=CM.jet, bins=None)
+
+ax4 = fig.add_subplot(224)
+ax4.title.set_text('Dominant frequency')
+plt.hexbin(test_pts[:,0], test_pts[:,1], C=freqMaxPower, cmap=CM.jet, bins=None)
+
+
+
+
+
+
