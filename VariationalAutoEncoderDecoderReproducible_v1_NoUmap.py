@@ -99,6 +99,8 @@ from os.path import dirname, join as pjoin
 import scipy.io as sio
 # import os
 import scipy.io as spio
+from matplotlib import cm as CM
+from matplotlib import mlab as ML
 # import numpy as np
 from keras.callbacks import EarlyStopping
 from keras.layers import MaxPool2D, AvgPool2D, BatchNormalization, Dropout, Input,Activation
@@ -115,16 +117,9 @@ from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,LeaveO
                                       StratifiedKFold, GroupShuffleSplit,
                                       GroupKFold, StratifiedShuffleSplit)
 
-# import matplotlib.pyplot as plt
+
 plt.close('all')
 
-
-# tf.compat.v1.keras.backend.set_session(sess)
-
-
-
-# from keras import backend as K
-# K.set_session(sess)
 
 
 
@@ -273,7 +268,7 @@ test_data_y = y[np.arange(start=1,stop=np.shape(y)[0],step=2)]
 train_data_group = group[np.arange(start=2,stop=np.shape(group)[0],step=2)]
 test_data_group = group[np.arange(start=1,stop=np.shape(group)[0],step=2)]
 
-
+N_bottleneckFeatures  = 2
 ##############################################################################
 ############################### Encoder / decoder part #######################
 ##############################################################################
@@ -304,8 +299,8 @@ encoder = tf.keras.layers.Dense(8,name='sina5')(encoder)
 
 encoder = tf.keras.layers.Dense(8,name='sina6')(encoder)
 encoder = tf.keras.layers.LeakyReLU(alpha=0.1)(encoder)
-distribution_mean = tf.keras.layers.Dense(6, name='mean')(encoder)
-distribution_variance = tf.keras.layers.Dense(6, name='log_variance')(encoder)
+distribution_mean = tf.keras.layers.Dense(N_bottleneckFeatures, name='mean')(encoder)
+distribution_variance = tf.keras.layers.Dense(N_bottleneckFeatures, name='log_variance')(encoder)
 latent_encoding = tf.keras.layers.Lambda(sample_latent_features)([distribution_mean, distribution_variance])
 
 
@@ -317,7 +312,7 @@ weights = encoder_model.get_weights()
 # weights1 = encoder_model.get_weights()
 
 ################### DECODER PART ############
-decoder_input = tf.keras.layers.Input(shape=(6)) # probably change the (6) to (2)!
+decoder_input = tf.keras.layers.Input(shape=(N_bottleneckFeatures)) # probably change the (6) to (2)!
 decoder = tf.keras.layers.Dense(64)(decoder_input)
 decoder = tf.keras.layers.Reshape((1, 64))(decoder)
 decoder = tf.keras.layers.Conv1DTranspose(16, 3, activation='relu')(decoder)
@@ -394,81 +389,18 @@ for i in range(0,len(test_data)):
 
 
 
-# # perplexity is a factor to experiment with. A low perplexity is recommended for small datasets. perplexitiy ranges between 5 and 50
-# X_embedded = TSNE(n_components=2,perplexity=13).fit_transform(np.array(encoded))
-# X_embedded.shape
 
-
-# ################# Creating figures #####################
-# # plot Latent feature clusters in scatterplot. 
-
-# xx = []
-# yy = []
-# z = []
-# groupcolor = []
-# for i in range(0,len(X_embedded)):
-#     # z.append(testy[i])
-#     test = X_embedded[i]
-#     test = np.expand_dims(test, axis=0)
-    
-#     op = test
-#     xx.append(op[0][0])
-#     yy.append(op[0][1])
-#     z.append(test_data_y[i]) # Fall risk
 
 import pandas as pd
 import seaborn as sns
 
 
-# df = pd.DataFrame()
-# df['xx'] = xx
-# df['yy'] = yy
-# df['z'] = ["fall risk-"+str(k) for k in z]
-# df['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
 
-
-# # plt.figure(figsize=(8, 6))
-
-# # fig3, (ax1,ax2,ax3,ax4) = plt.subplot2(nrows=2, ncols=2)
-# fig3, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
-
-# sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df)
-# axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
-# axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
-
-# sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df )
-# axes[0,1].set_title('Raw latent features per perturbation colored by subject')
-# axes[0,1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-
-# plt.figure(figsize=(8, 6))
-# sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=df)
-# plt.show()
-
-# meanDf = df.groupby(['groupcolor']).mean()
-
-# sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf )
-# axes[1,0].set_title('Average latent features colored by subject')
-# axes[1,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
-
-
-# # plt.figure(figsize=(8, 6))
-# # sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=meanDf)
-# # plt.show()
-
-
-# meanDfwithFallRisk = df.groupby(['groupcolor','z']).mean()
-
-# sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk )
-# axes[1,1].set_title('Average latent features colored by fall risk')
-# axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
 plt.figure(5)
 plt.plot(np.array(encoded))
 
 ####################### UMAP ###############################################
-import umap.umap_ as umap
-reducer = umap.UMAP(random_state=42)
-embedding = reducer.fit_transform(np.array(encoded))
-embedding.shape
+
 
 # plt.scatter(
 #     embedding[:, 0],
@@ -480,19 +412,20 @@ xx = []
 yy = []
 z = []
 groupcolor = []
-for i in range(0,len(embedding)):
+for i in range(0,len(np.array(encoded))):
     # z.append(testy[i])
-    test = embedding[i]
-    test = np.expand_dims(test, axis=0)
-    
-    op = test
-    xx.append(op[0][0])
-    yy.append(op[0][1])
+    xx.append(np.array(encoded)[i][0])
+    yy.append(np.array(encoded)[i][1])
+    # xx.append(op[0][0])
+    # yy.append(op[0][1])
     z.append(test_data_y[i]) # Fall risk
 
+
+xx = np.array(xx)
+yy = np.array(yy)
 df1 = pd.DataFrame()
-df1['xx'] = embedding[:, 0]
-df1['yy'] = embedding[:, 1]
+df1['xx'] = xx
+df1['yy'] = yy
 df1['z'] = ["fall risk-"+str(k) for k in z]
 df1['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
 
@@ -532,6 +465,10 @@ axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
 
 
 
+
+############### HIER MORGEN VERDER CONSTRUCT DUMMY DATA OP ELKE X INTEGER Y VALUE BETEEN -20 +60
+
+
 ############# Encoder model saving stuff ######################
 
 # encoder_model.save('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\' + 'model1')
@@ -539,17 +476,7 @@ axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
 
 # loaded = tf.saved_model.load('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\' + 'model1')
 
-##### Describing the signal (encoded) #####
-features = np.array(encoded)
-meanFeatures = np.mean(features,axis=0)
-sdFeatures = np.std(features,axis=0)
-encooo = []
-for indx in range(0,6):
-    encodedNOr = [meanFeatures[indx] - 2*sdFeatures[indx], meanFeatures[indx] - sdFeatures[indx], meanFeatures[indx], meanFeatures[indx] + sdFeatures[indx], meanFeatures[indx] + 2*sdFeatures[indx]]
-    encooo.append(encodedNOr)
-encooo = np.round(encooo,0)
-pathFeatures = 'C:\\Users\\michi\\Desktop\\SSI_Stroke\\features\\features'
-np.save(pathFeatures,encooo)
+
 
 
 
@@ -578,32 +505,27 @@ test_pts = np.array([
     for x in np.linspace(0, 1, 10)
 ])
 
-
-
-
 ### Calculate the inverse ###
-inv_transformed_points = reducer.inverse_transform(test_pts)
+# inv_transformed_points = reducer.inverse_transform(test_pts)
 
 
-import tensorflow as tf
-from keras import backend as K
 
-# K.clear_session()
-
-
-pathToEncoderModel = 'C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\'
-# model = keras.models.load_model(pathToEncoderModel, compile=False)
-
-from keras.models import load_model
-model = load_model(pathToEncoderModel)
-
+# w, h = 85, 85
+# Matrix = [[0 for x in range(w)] for y in range(h)] 
 dummySignals = np.zeros((200,6))
-for indx in range(0,100):
-    dummyData = np.expand_dims(inv_transformed_points[indx], axis=0)
-    prediction = model.predict(dummyData)
-    predictiondim = prediction.reshape(200,6) #np.squeeze(prediction, axis=(2,))
-    dummySignals = np.vstack((dummySignals,predictiondim))
-    # dummySignals = predictiondim
+dummyX = np.arange(-75,100)
+test_pts0 = []
+test_pts1 = []
+for indx in range(-60,0): # y values
+    for indx2 in range(0,len(dummyX)-2):
+        test_pts0 = np.append(test_pts0,dummyX[indx]) 
+        test_pts1 = np.append(test_pts1, indx2)
+        dummyData = np.expand_dims([dummyX[indx],indx2], axis=0)
+        prediction = decoder_model.predict(dummyData)
+        predictiondim = prediction.reshape(200,6) #np.squeeze(prediction, axis=(2,))
+        dummySignals = np.vstack((dummySignals,predictiondim))
+
+
 
 
 minimum1 = []
@@ -612,8 +534,7 @@ maximum1 = []
 maximum4 = []
 std1 = []
 std4 = []
-freqMaxPower = []
-freqRes = 20/200
+
 
 for indx in np.arange(200, len(dummySignals),200, dtype=None):
     # print (indx)
@@ -621,9 +542,6 @@ for indx in np.arange(200, len(dummySignals),200, dtype=None):
     maximum1 = np.append(maximum1, np.max(dummySignals[indx:indx+200,1]))
     minimum4 = np.append(minimum4, np.min(dummySignals[indx:indx+200,4]))
     maximum4 = np.append(maximum4, np.max(dummySignals[indx:indx+200,4]))
-    # power = fourierTransforming(dummySignals[indx:indx+200,1], lineartaper = None, sampleFreq=20)
-    # maximumPower = freqRes * np.where(power==np.max(power))[0][0]
-    # freqMaxPower = np.append(freqMaxPower,maximumPower)
     std1 = np.append(std1, np.std(dummySignals[indx:indx+200,1]))
     std4 = np.append(std4, np.std(dummySignals[indx:indx+200,4]))
 
@@ -631,14 +549,6 @@ for indx in np.arange(200, len(dummySignals),200, dtype=None):
 ### Final features ####
 range1 = maximum1 - minimum1
 range4 = maximum4 - minimum4
-symmetryRatio = maximum1 / maximum4
-freqMaxPower = freqMaxPower
-
-
-
-
-
-
 
 
 fig1,axs = plt.subplots()
@@ -648,28 +558,13 @@ sns.scatterplot(ax=axs,x='xx', y='yy',hue='z', data=df1)
 
 
 
-# from matplotlib import pyplot as PLT
-from matplotlib import cm as CM
-from matplotlib import mlab as ML
-import numpy as NP
 
-# n = 1e5
-# x = y = NP.linspace(-5, 5, 100)
-# X, Y = NP.meshgrid(x, y)
-# Z1 = ML.bivariate_normal(X, Y, 2, 2, 0, 0)
-# Z2 = ML.bivariate_normal(X, Y, 4, 1, 1, 1)
-# ZD = Z2 - Z1
-# x = X.ravel()
-# y = Y.ravel()
-# z = ZD.ravel()
-# gridsize=30
-# PLT.subplot(111)
 
-# if 'bins=None', then color of each hexagon corresponds directly to its count
-# 'C' is optional--it maps values to x-y coordinates; if 'C' is None (default) then 
-# the result is a pure 2D histogram 
 
-plt.hexbin(test_pts[:,0], test_pts[:,1], C=symmetryRatio, cmap=CM.jet, bins=None)
+
+
+
+plt.hexbin(test_pts[:,0], test_pts[:,1], C=range1, cmap=CM.jet, bins=None)
 # PLT.axis([x.min(), x.max(), y.min(), y.max()])
 
 cb = plt.colorbar()
@@ -689,20 +584,20 @@ fig = plt.figure(10)
 
 fig = plt.figure(11)
 ax1 = fig.add_subplot(221)
-ax1.title.set_text('Umap 2d')
+ax1.title.set_text('2d encoder /decoder')
 plt.scatter(df1['xx'], df1['yy'], c=df1['z'])
 # axes[1,0]
 ax2 = fig.add_subplot(222)
-ax2.title.set_text('Symmetry ratio')
-plt.hexbin(test_pts[:,0], test_pts[:,1], C=range1, cmap=CM.jet, bins=None)
+ax2.title.set_text('Range 1')
+plt.hexbin(test_pts0, test_pts1, C=range1, cmap=CM.jet, bins=None)
 
 ax3 = fig.add_subplot(223)
-ax3.title.set_text('Range of Motion')
-plt.hexbin(test_pts[:,0], test_pts[:,1], C=range4, cmap=CM.jet, bins=None)
+ax3.title.set_text('std1 ')
+plt.hexbin(test_pts0, test_pts1, C=std1, cmap=CM.jet, bins=None)
 
 ax4 = fig.add_subplot(224)
-ax4.title.set_text('Dominant frequency')
-plt.hexbin(test_pts[:,0], test_pts[:,1], C=std1, cmap=CM.jet, bins=None)
+ax4.title.set_text('std 4')
+plt.hexbin(test_pts0, test_pts1, C=std4, cmap=CM.jet, bins=None)
 
 
 K.clear_session()
