@@ -48,34 +48,34 @@ to do:
 @author: michi
 """
 from keras import backend as K
-K.clear_session()
+# K.clear_session()
 
-# Apparently you may use different seed values at each stage
-seed_value= 1
-# 1. Set the `PYTHONHASHSEED` environment variable at a fixed value
+# # Apparently you may use different seed values at each stage
+seed_value= 0
+# # 1. Set the `PYTHONHASHSEED` environment variable at a fixed value
 import os
-os.environ['PYTHONHASHSEED']=str(seed_value)
-# 2. Set the `python` built-in pseudo-random generator at a fixed value
-import random
-random.seed(seed_value)
-# 3. Set the `numpy` pseudo-random generator at a fixed value
+# 
+# # 2. Set the `python` built-in pseudo-random generator at a fixed value
+# import random
+# random.seed(seed_value)
+# # 3. Set the `numpy` pseudo-random generator at a fixed value
 import numpy as np
-np.random.seed(seed_value)
+# np.random.seed(seed_value)
 
-# 4. Set the `tensorflow` pseudo-random generator at a fixed value
+# # 4. Set the `tensorflow` pseudo-random generator at a fixed value
 import tensorflow as tf
-tf.random.set_seed(seed_value)
-# for later versions: 
-# tf.compat.v1.set_random_seed(seed_value)
+# tf.random.set_seed(seed_value)
+# # for later versions: 
+# # tf.compat.v1.set_random_seed(seed_value)
 
-# 5. Configure a new global `tensorflow` session
-# from keras import backend as K
-# session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-# sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-# K.set_session(sess)
-# for later versions:
-session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
+# # 5. Configure a new global `tensorflow` session
+# # from keras import backend as K
+# # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+# # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+# # K.set_session(sess)
+# # for later versions:
+# session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+# sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
 
 
 
@@ -120,7 +120,7 @@ from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,LeaveO
 
 plt.close('all')
 
-
+os.environ['PYTHONHASHSEED']=str(seed_value)
 
 
 
@@ -430,97 +430,50 @@ df1['z'] = ["fall risk-"+str(k) for k in z]
 df1['groupcolor'] = ["subject-"+str(k) for k in test_data_group]
 
 
-fig4, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
+# fig4, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
 
-sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df1)
-axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
-axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
+# sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df1)
+# axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
+# axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
 
-sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df1 )
-axes[0,1].set_title('Raw latent features per perturbation colored by subject')
-axes[0,1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
+# sns.scatterplot(ax=axes[0,1],x='xx', y='yy',hue='groupcolor', data=df1 )
+# axes[0,1].set_title('Raw latent features per perturbation colored by subject')
+# axes[0,1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
 
-# plt.figure(figsize=(8, 6))
-# sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=df)
-# plt.show()
+# # plt.figure(figsize=(8, 6))
+# # sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=df)
+# # plt.show()
 
-meanDf1 = df1.groupby(['groupcolor']).mean()
+# meanDf1 = df1.groupby(['groupcolor']).mean()
 
-sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf1 )
-axes[1,0].set_title('Average latent features colored by subject')
-axes[1,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
-
-
-# plt.figure(figsize=(8, 6))
-# sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=meanDf)
-# plt.show()
+# sns.scatterplot(ax=axes[1,0],x='xx', y='yy',hue='groupcolor', data=meanDf1 )
+# axes[1,0].set_title('Average latent features colored by subject')
+# axes[1,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
 
 
-meanDfwithFallRisk1 = df1.groupby(['groupcolor','z']).mean()
-
-sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk1 )
-axes[1,1].set_title('Average latent features colored by fall risk')
-axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
+# # plt.figure(figsize=(8, 6))
+# # sns.scatterplot(x='xx', y='yy',hue='groupcolor', data=meanDf)
+# # plt.show()
 
 
+# meanDfwithFallRisk1 = df1.groupby(['groupcolor','z']).mean()
+
+# sns.scatterplot(ax=axes[1,1],x='xx', y='yy',hue='z', data=meanDfwithFallRisk1 )
+# axes[1,1].set_title('Average latent features colored by fall risk')
+# axes[1,1].legend(bbox_to_anchor=(0.5, -0.2), loc='upper left', borderaxespad=0)
 
 
 
-############### HIER MORGEN VERDER CONSTRUCT DUMMY DATA OP ELKE X INTEGER Y VALUE BETEEN -20 +60
-
-
-############# Encoder model saving stuff ######################
-
-# encoder_model.save('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\' + 'model1')
-# decoder_model.save('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\')
-
-# loaded = tf.saved_model.load('C:\\Users\\michi\\Desktop\\SSI_Stroke\\savingModels\\' + 'model1')
-
-
-
-
-
-################################################################
-################################################################
-################################################################
-################################################################
-############### UMAP INVERSE ###################################
-################################################################
-################################################################
-################################################################
-x = []
-y = []
-# Define the corners ##
-corners = np.array([
-    [-10, -10],  # 1
-    [-10, 15],  # 7
-    [15, -10],  # 2
-    [15, 15],  # 0
-])
-#### Create array within the defined corners 
-test_pts = np.array([
-    (corners[0]*(1-x) + corners[1]*x)*(1-y) +
-    (corners[2]*(1-x) + corners[3]*x)*y
-    for y in np.linspace(0, 1, 10)
-    for x in np.linspace(0, 1, 10)
-])
-
-### Calculate the inverse ###
-# inv_transformed_points = reducer.inverse_transform(test_pts)
-
-
-
-# w, h = 85, 85
-# Matrix = [[0 for x in range(w)] for y in range(h)] 
 dummySignals = np.zeros((200,6))
-dummyX = np.arange(-75,100)
+dummyX = np.arange(int(np.min(xx)),int(np.max(xx)))
+dummyY = np.arange(int(np.min(yy)),int(np.max(yy)))
 test_pts0 = []
 test_pts1 = []
-for indx in range(-60,0): # y values
-    for indx2 in range(0,len(dummyX)-2):
+for indx in range(len(dummyX)): # y values
+    for indx2 in range(0,len(dummyY)):
         test_pts0 = np.append(test_pts0,dummyX[indx]) 
-        test_pts1 = np.append(test_pts1, indx2)
-        dummyData = np.expand_dims([dummyX[indx],indx2], axis=0)
+        test_pts1 = np.append(test_pts1, dummyY[indx2])
+        dummyData = np.expand_dims([dummyX[indx],dummyY[indx2]], axis=0)
         prediction = decoder_model.predict(dummyData)
         predictiondim = prediction.reshape(200,6) #np.squeeze(prediction, axis=(2,))
         dummySignals = np.vstack((dummySignals,predictiondim))
@@ -564,12 +517,12 @@ sns.scatterplot(ax=axs,x='xx', y='yy',hue='z', data=df1)
 
 
 
-plt.hexbin(test_pts[:,0], test_pts[:,1], C=range1, cmap=CM.jet, bins=None)
+# plt.hexbin(test_pts[:,0], test_pts[:,1], C=range1, cmap=CM.jet, bins=None)
 # PLT.axis([x.min(), x.max(), y.min(), y.max()])
 
-cb = plt.colorbar()
-cb.set_label('mean value')
-plt.show()   
+# cb = plt.colorbar()
+# cb.set_label('mean value')
+# plt.show()   
 
 
 
@@ -600,7 +553,7 @@ ax4.title.set_text('std 4')
 plt.hexbin(test_pts0, test_pts1, C=std4, cmap=CM.jet, bins=None)
 
 
-K.clear_session()
+# K.clear_session()
 
 
 
