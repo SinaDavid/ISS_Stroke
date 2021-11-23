@@ -58,7 +58,7 @@ to do:
 Tomorrow:
     loss function plot
     save as a svg
-    push to github
+    push to github Doe
     
 
 
@@ -717,55 +717,66 @@ if N_bottleneckFeatures ==2:
     ax1 = fig.add_subplot(321)
     ax1.title.set_text('std 1')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=SD_dec[:,0], cmap=CM.jet, bins=None)
+    plt.colorbar()
 
     ax2 = fig.add_subplot(322)
     ax2.title.set_text('std 2')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=SD_dec[:,1], cmap=CM.jet, bins=None)
+    plt.colorbar()
     
     ax3 = fig.add_subplot(323)
     ax3.title.set_text('std3 ')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=SD_dec[:,2], cmap=CM.jet, bins=None)
+    plt.colorbar()
     
     ax4 = fig.add_subplot(324)
     ax4.title.set_text('std 4')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=SD_dec[:,3], cmap=CM.jet, bins=None)
+    plt.colorbar()
     
     ax5 = fig.add_subplot(325)
     ax5.title.set_text('std5 ')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=SD_dec[:,4], cmap=CM.jet, bins=None)
+    plt.colorbar()
     
     ax6 = fig.add_subplot(326)
     ax6.title.set_text('std 6')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=SD_dec[:,5], cmap=CM.jet, bins=None)
-
+    plt.colorbar()
+    plt.suptitle('Standard deviation per signal')
 
 
     fig = plt.figure(12)
     ax1 = fig.add_subplot(321)
-    ax1.title.set_text('std 1')
+    ax1.title.set_text('Dominant frequency signal 1')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=freq_max[:,0], cmap=CM.jet, bins=None)
+    plt.colorbar()
 
     ax2 = fig.add_subplot(322)
-    ax2.title.set_text('std 2')
+    ax2.title.set_text('Dominant frequency signal 2')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=freq_max[:,1], cmap=CM.jet, bins=None)
+    plt.colorbar()
     
     ax3 = fig.add_subplot(323)
-    ax3.title.set_text('std3 ')
+    ax3.title.set_text('Dominant frequency signal 3 ')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=freq_max[:,2], cmap=CM.jet, bins=None)
+    plt.colorbar()
     
     ax4 = fig.add_subplot(324)
-    ax4.title.set_text('std 4')
+    ax4.title.set_text('Dominant frequency signal 4')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=freq_max[:,3], cmap=CM.jet, bins=None)
+    plt.colorbar()
     
     ax5 = fig.add_subplot(325)
-    ax5.title.set_text('std5 ')
+    ax5.title.set_text('Dominant frequency signal 5 ')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=freq_max[:,4], cmap=CM.jet, bins=None)
+    plt.colorbar()
     
     ax6 = fig.add_subplot(326)
-    ax6.title.set_text('std 6')
+    ax6.title.set_text('Dominant frequency signal 6')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=freq_max[:,5], cmap=CM.jet, bins=None)
-
-
+    plt.colorbar()
+    plt.suptitle('Dominant frequency per signal')
 
 
 
