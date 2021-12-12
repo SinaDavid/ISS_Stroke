@@ -48,21 +48,36 @@ Version 0.1
 - create validation procedure using decoder and actual done
 - create additional subgroup see whataps Sina. done
   - in the loop by 288 done
+- train final model and store weights for later use. DONe  
+- make plots look good. Done  
+-  loss function plot
+-  save as a svg
+-  push to github Doe  
+- exclude two stroke and two healthy. Done
+- perform a validation RMSE compare with train rmse Done  
+  
 to do:
 
-   
-- train final model and store weights for later use. DONe
+
 - get RMS loss and kl loss separately. 
-- make plots look good. Done
+- create 4 data sets around the center.
+-  
+
 
 Tomorrow:
-    loss function plot
-    save as a svg
-    push to github Doe
+
     
+- validation steps:
+    1) loss and testing loss fucntion. 
+    2) group validation. 
+    3) Characteristics of the signal.
+    4) RMSE training and testing.
+    5) exploring the latent space. 
 
-
-  
+  5a original signal through encoder / decoder. 
+  5b take latent features and add 2 points. 
+  5c compare the decoded signal and created signal. 
+  5d visualize the difference. 
 
 
 @author: michi
@@ -134,6 +149,7 @@ from sklearn.metrics import confusion_matrix
 from keras.regularizers import l2
 from keras.models import load_model
 from keras import regularizers
+from matplotlib.lines import Line2D
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,LeaveOneGroupOut,
                                       StratifiedKFold, GroupShuffleSplit,
                                       GroupKFold, StratifiedShuffleSplit)
@@ -145,7 +161,8 @@ plt.close('all')
 # os.environ['PYTHONHASHSEED']=str(seed_value)
 
 
-
+def rmse(predictions, targets):
+    return np.sqrt(((predictions - targets) ** 2).mean())
 
 
 
@@ -164,8 +181,13 @@ def get_loss(distribution_mean, distribution_variance):
     def total_loss(y_true, y_pred):
         reconstruction_loss_batch = get_reconstruction_loss(y_true, y_pred)
         kl_loss_batch = get_kl_loss(distribution_mean, distribution_variance)
+        # print('print recon loss: ' + str(reconstruction_loss_batch) + 'print kl loss:' + str(kl_loss_batch))
+        # pickle.dump(test, locals())
+        # f = open('testing123.pckl', 'wb')
+        # pickle.dump(reconstruction_loss_batch, f)
+        # f.close()
         return reconstruction_loss_batch + kl_loss_batch
-        print('print recon loss: ' + reconstruction_loss_batch + 'print kl loss:' + kl_loss_batch)
+        
     return total_loss
 
 def sample_latent_features(distribution):
@@ -226,8 +248,9 @@ fs = 1/0.05 ### 20Hz downsampled
 fmax = fs/2
 freqResolutie = fmax/windowLength 
 usingExistingModel = True
-savingModel = True
+savingModel = False
 loadingInitializedWeights = False
+storingTrainedWeights = False  # Ook al train je indien deze op false worden nieuwe weights niet opgeslagen
 
 pathEncoderModel = pathToWeightsavingANDextraction + "EncoderModel" + str(N_bottleneckFeatures)
 pathDecoderModel = pathToWeightsavingANDextraction + "DecoderModel" + str(N_bottleneckFeatures)
@@ -299,7 +322,7 @@ for indx in range(len(dataE)):
 ### Gedaan voor de events!####
 for indx in range(len(data)):
     data[indx] = data[indx][::5]
-
+### Gedaan voor de data (in stapjes van 5 ::5)#####
   
 #######################################################################
 
@@ -309,7 +332,9 @@ for indx in range(len(data)):
 data en dataE te combineren data augmentation. per group! per trial!
 
 '''
+count = 0
 trackGroup = []
+trackGroup1 = []
 dataAugmented = np.zeros(len(inputColumns))
 for indx in range(len(data)):
     if len(data[indx])>200:
@@ -318,8 +343,13 @@ for indx in range(len(data)):
             index = dataE[indx][indx2]
             tempArray = data[indx][int(index[0]):]
             if len(tempArray)>200:
+                count +=1
                 dataAugmented = np.vstack((dataAugmented,tempArray[0:200,inputColumns]))
                 trackGroup.append(indx)
+                if indx < 104:
+                    trackGroup1.append('SS'+str(group[indx]))
+                else:
+                    trackGroup1.append('W'+str(group[indx]))
             
 
     
@@ -346,17 +376,74 @@ for indx in range(len(trackGroup)):
     # group.append(int(filename[1:4]))
 y = np.delete(y,(0),axis=0)
 # group = np.array(group)
-
 ########    Reshape  the X data ############
 dataAugmented = dataAugmented.reshape(len(y),200,len(inputColumns))
 
+'''
+# Assigning two subjects from stroke + 2 from healthy for external validation.
+SS1 & SS38  & W1 & W38
+# split test and training on subject level. 
+
+Also remove y indexen from excluded data
+'''
+externSubjects = ['','','','']#'SS1','SS38','W1','W38'
+indexenexternSubjects = []
+indexeninternSubjects = []
+train_data = []
+test_data = []
+extern_data = []
+
+## External validation stuff ###
+for indx in range(0,len(trackGroup1)):
+    if  trackGroup1[indx]!=externSubjects[0] and trackGroup1[indx]!=externSubjects[1] and trackGroup1[indx]!=externSubjects[2] and trackGroup1[indx]!=externSubjects[3]:
+        indexeninternSubjects.append(indx)     
+    else:
+        indexenexternSubjects.append(indx)
+        # print(trackGroup1[indx])
+extern_data = dataAugmented[indexenexternSubjects,:,:]
+other_data = dataAugmented[indexeninternSubjects,:,:] 
+y_adapted = y[indexeninternSubjects] # which group (stroke F / NF / healthy etc)
+
+# Make a int list of subjects (zucht wat een werk...)
+subject = 0
+groupsplit=[subject]
+for indx in range(1,len(trackGroup1)):
+    if trackGroup1[indx]==trackGroup1[indx-1]:
+        groupsplit.append(subject)
+    else:
+        subject+=1
+        groupsplit.append(subject)
+groupsplit = np.array(groupsplit)
+groupsplit =  groupsplit[indexeninternSubjects]
+
+## Group split is a variable which contains a number for each subject. the length is equal to other_data (which needs to be split)
+
+
+# Now divide other_data into train and test data by groupsplit.
+# ####### Split data by group (subject level) #################
+gss = GroupShuffleSplit(n_splits=2, train_size=.65, random_state=1)
+gss.get_n_splits()
+
+for train_idx, test_idx in gss.split(other_data, y_adapted, groupsplit):
+     print("TRAIN:", train_idx, "TEST:", test_idx)
+    
+
+train_data = other_data[train_idx,:,:]
+test_data = other_data[test_idx,:,:]
+train_y = y_adapted[train_idx]
+test_y = y_adapted[test_idx]
+
+
+
+
+
 ########### Split in train and test set ################
-train_data = dataAugmented[np.arange(start=2,stop=np.shape(dataAugmented)[0],step=2)]
-test_data = dataAugmented[np.arange(start=1,stop=np.shape(dataAugmented)[0],step=2)]
-train_data_y = y[np.arange(start=2,stop=np.shape(y)[0],step=2)]
-test_data_y = y[np.arange(start=1,stop=np.shape(y)[0],step=2)]
-train_data_group = group[np.arange(start=2,stop=np.shape(group)[0],step=2)]
-test_data_group = group[np.arange(start=1,stop=np.shape(group)[0],step=2)]
+# train_data = dataAugmented[np.arange(start=2,stop=np.shape(dataAugmented)[0],step=2)]
+# test_data = dataAugmented[np.arange(start=1,stop=np.shape(dataAugmented)[0],step=2)]
+# train_data_y = y[np.arange(start=2,stop=np.shape(y)[0],step=2)]
+# test_data_y = y[np.arange(start=1,stop=np.shape(y)[0],step=2)]
+# train_data_group = group[np.arange(start=2,stop=np.shape(group)[0],step=2)]
+# test_data_group = group[np.arange(start=1,stop=np.shape(group)[0],step=2)]
 
 
 ##############################################################################
@@ -463,18 +550,18 @@ autoencoder = tf.keras.models.Model(input_data, decoded)
 autoencoder.compile(loss=get_loss(distribution_mean, distribution_variance), optimizer='adam')
 print("\nautoenoder summary")
 autoencoder.summary()
-    
+ 
 if usingExistingModel  == False:    
     # history = autoencoder.fit(train_data, train_data, epochs=200, batch_size=64, validation_data=(test_data, test_data))
     history = autoencoder.fit(train_data,
                               train_data,
-                              epochs=1000,
+                              epochs=400,
                               batch_size=64,
-                              callbacks=[EarlyStopping(monitor='loss', patience=20)],
+                              callbacks=[EarlyStopping(monitor='loss', patience=40)],
                               validation_data=(test_data, test_data))
     
     plt.plot(history.history['val_loss'])
-    
+    plt.plot(history.history['loss'])
     #### storing train weights and biases ####
     decoderWeightstrained = []
     encoderWeightstrained = []
@@ -484,14 +571,15 @@ if usingExistingModel  == False:
     
     for indx in range(0,len(encoder_model.layers)):
         encoderWeightstrained.append(encoder_model.layers[indx].get_weights())
-    
-    f = open(pathToWeightsavingANDextraction + 'decoderTRAINEDWeightsBottleneck'+ str(N_bottleneckFeatures) + '.pckl', 'wb')
-    pickle.dump(decoderWeightstrained, f)
-    f.close()
-    
-    f = open(pathToWeightsavingANDextraction + 'encoderTRAINEDWeightsBottleneck'+ str(N_bottleneckFeatures) + '.pckl', 'wb')
-    pickle.dump(encoderWeightstrained, f)
-    f.close()
+        
+    if storingTrainedWeights ==True:
+        f = open(pathToWeightsavingANDextraction + 'decoderTRAINEDWeightsBottleneck'+ str(N_bottleneckFeatures) + '.pckl', 'wb')
+        pickle.dump(decoderWeightstrained, f)
+        f.close()
+        
+        f = open(pathToWeightsavingANDextraction + 'encoderTRAINEDWeightsBottleneck'+ str(N_bottleneckFeatures) + '.pckl', 'wb')
+        pickle.dump(encoderWeightstrained, f)
+        f.close()
     
     
     
@@ -527,17 +615,24 @@ elif usingExistingModel==True:
     print('the trained weights and biases are inserted in the model')
 
 ##################### Next visualize the decoded data against original data.   ####################
-sprong = 400
+sprong = 100
+originalData = []
+Reconstructed = []
 fig2, axes = plt.subplots(6, 2, figsize=(15, 5))#, sharey=True
 for indx in range(0,6): 
+    originalData.append(test_data[indx*sprong])
     axes[indx,0].plot(test_data[indx*sprong])
     axes[0, 0].set_title('original timeseries')
     test = np.expand_dims(test_data[indx*sprong], axis=0)
     testPredicted = autoencoder.predict(test)
     testPredicted = testPredicted[0,:,:]
+    Reconstructed.append(testPredicted)
     axes[indx,1].plot(testPredicted)
     axes[0, 1].set_title('Reconstructed timeseries')
     
+
+
+
 
 ### Calculate for orginal signal SD(per column) + as well as for the decoder.
 SD_org = np.transpose(np.zeros(6))
@@ -582,6 +677,25 @@ plt.figure(5)
 plt.plot(np.array(encoded))
 
 
+###### Newly created data: #######
+# createdData = []
+# gemidFeatures = np.mean(np.array(encoded),axis=0)
+# sdFeatures = np.mean(np.array(encoded),axis=0)
+# dataTemp = []
+
+# for indx in range(0,4):
+#     inputCreated = gemidFeatures
+#     inputCreated[indx]= gemidFeatures[indx]+sdFeatures[indx]*2
+#     inputCreated = np.expand_dims(inputCreated, axis=0)
+#     print(inputCreated)
+#     dataTemp = decoder_model.predict(inputCreated).reshape((200,6))
+#     createdData.append(dataTemp)
+
+
+
+
+
+
 ################### SAVING MODEL #######################
 
 if savingModel == True:
@@ -611,7 +725,7 @@ if N_bottleneckFeatures ==2:
         yy.append(np.array(encoded)[i][1])
         # xx.append(op[0][0])
         # yy.append(op[0][1])
-        z.append(test_data_y[i]) # Fall risk / group
+        z.append(test_y[i]) # Fall risk / group
     
     
     xx = np.array(xx)
@@ -689,7 +803,7 @@ if N_bottleneckFeatures ==2:
     df1.loc[df1['z'] == 'fall risk-[2]', 'z'] = 'green'
     df1.loc[df1['z'] == 'fall risk-[3]', 'z'] = 'lightgreen'
     ################# Thursday 21/10/2021  ################
-    from matplotlib.lines import Line2D
+    
 
 
     fig = plt.figure(10)
@@ -743,7 +857,7 @@ if N_bottleneckFeatures ==2:
     ax6.title.set_text('std 6')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=SD_dec[:,5], cmap=CM.jet, bins=None)
     plt.colorbar()
-    plt.suptitle('Standard deviation per signal')
+    plt.suptitle('Standard deviation per signal',fontsize=20)
 
 
     fig = plt.figure(12)
@@ -776,7 +890,190 @@ if N_bottleneckFeatures ==2:
     ax6.title.set_text('Dominant frequency signal 6')
     plt.hexbin(encoded1[:,0], encoded1[:,1], C=freq_max[:,5], cmap=CM.jet, bins=None)
     plt.colorbar()
-    plt.suptitle('Dominant frequency per signal')
+    plt.suptitle('Dominant frequency per signal',fontsize=20)
+
+
+
+
+################ STORING THE DATA ############################
+if usingExistingModel == False:
+    np.save('lossfunction_validation' + str(N_bottleneckFeatures) +'.npy',history.history['val_loss'])
+    np.save('lossfunction_' + str(N_bottleneckFeatures) +'.npy',history.history['loss'])
+# np.save('orginalData' + str(N_bottleneckFeatures) +'.npy',originalData)
+# np.save('reconstructed' + str(N_bottleneckFeatures) +'.npy',Reconstructed)
+# np.save('createdData' + str(N_bottleneckFeatures) +'.npy',createdData)
+
+# np.save('LatentFeatureValues' + str(N_bottleneckFeatures) +'.npy',inputCreated)
+#################################################################
+
+# loss = np.load('lossfunction.npy')
+# plt.figure()
+# plt.plot(loss)
+# plt.title('Validation loss',fontsize=20)
+# plt.xlabel('Number of training Epochs',fontsize=16)
+# plt.ylabel('Reconstructions loss & KL loss',fontsize=16)
+
+
+
+
+
+
+#### Additional validation ######
+
+
+# step 1 #
+
+# determine per column rmse. 
+# error = [0,0,0,0,0,0]
+# errortemp = []
+# for indx in range(0,len(extern_data)):
+#     tempDimensionextern = np.expand_dims(extern_data[indx,:,:], axis=0) 
+#     predictedExternal = autoencoder.predict(tempDimensionextern)
+#     predictedExternal = predictedExternal.reshape(200,6)
+#     # RMSE = rmse(predictedExternal[:,:],extern_data[indx,:,:])
+#     for indx2 in range(0,6):
+#         errortemp.append(rmse(predictedExternal[:,indx2],extern_data[indx,:,indx2]))
+#     error = np.vstack((error,errortemp))
+#     errortemp = []
+
+# error = np.delete(error, (0), axis=0)
+# externMeanRMSE = np.mean(error,axis=0)
+################################
+### Repeat for training data ###
+################################
+
+error_train = [0,0,0,0,0,0]
+errortemp = []
+for indx in range(0,len(train_data)):
+    tempDimensiontrain = np.expand_dims(train_data[indx,:,:], axis=0) 
+    predictedtrain = autoencoder.predict(tempDimensiontrain)
+    predictedtrain = predictedtrain.reshape(200,6)
+    # RMSE = rmse(predictedExternal[:,:],extern_data[indx,:,:])
+    for indx2 in range(0,6):
+        errortemp.append(rmse(predictedtrain[:,indx2],train_data[indx,:,indx2]))
+    error_train = np.vstack((error_train,errortemp))
+    errortemp = []
+
+error_train = np.delete(error_train, (0), axis=0)
+trainMeanRMSE = np.mean(error_train,axis=0)
+
+################################
+### Repeat for test data ###
+################################
+
+error_test = [0,0,0,0,0,0]
+errortemp = []
+for indx in range(0,len(test_data)):
+    tempDimensiontest = np.expand_dims(test_data[indx,:,:], axis=0) 
+    predictedtest = autoencoder.predict(tempDimensiontest)
+    predictedtest = predictedtest.reshape(200,6)
+    # RMSE = rmse(predictedExternal[:,:],extern_data[indx,:,:])
+    for indx2 in range(0,6):
+        errortemp.append(rmse(predictedtest[:,indx2],test_data[indx,:,indx2]))
+    error_test = np.vstack((error_test,errortemp))
+    errortemp = []
+
+error_test = np.delete(error_test, (0), axis=0)
+testMeanRMSE = np.mean(error_test,axis=0)
+
+
+### plot 1 subplt
+ylim = 30
+ymin =0
+
+fig = plt.figure(20)
+ax1 = fig.add_subplot(131)
+ax1.title.set_text('RMSE external validation')
+# ax1.bar([0,1,2,3,4,5],externMeanRMSE)
+# plt.ylim(top=ylim) #ymax is your value
+# plt.ylim(bottom=ymin) #ymin is your value
+# plt.xlabel('Column number')
+# plt.ylabel('degrees')
+
+ax2 = fig.add_subplot(132)
+ax2.title.set_text('RMSE training validation')
+ax2.bar([0,1,2,3,4,5],trainMeanRMSE)
+plt.ylim(top=ylim) #ymax is your value
+plt.ylim(bottom=ymin) #ymin is your value
+plt.xlabel('Column number')
+plt.ylabel('degrees')
+
+ax3 = fig.add_subplot(133)
+ax3.title.set_text('RMSE test validation')
+ax3.bar([0,1,2,3,4,5],testMeanRMSE)
+plt.ylim(top=ylim) #ymax is your value
+plt.ylim(bottom=ymin) #ymin is your value
+plt.xlabel('Column number')
+plt.ylabel('degrees')
+## put on discord
+
+
+
+####################### Step 5 of the validation #############################
+
+
+
+# use thsi tomorrow morning
+
+# plt.figure(5)
+# plt.plot(np.array(encoded))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -943,14 +1240,6 @@ if N_bottleneckFeatures ==2:
 #     ax4 = fig.add_subplot(224)
 #     ax4.title.set_text('std 4')
 #     plt.hexbin(test_pts0, test_pts1, C=std4, cmap=CM.jet, bins=None)
-
-
-
-
-#### Additional validation ######
-
-
-
 
 
 
