@@ -164,8 +164,6 @@ plt.close('all')
 def rmse(predictions, targets):
     return np.sqrt(((predictions - targets) ** 2).mean())
 
-def nrmse(predictions, targets):
-    return np.sqrt((((predictions - targets)/targets) ** 2).mean())
 
 
 def get_loss(distribution_mean, distribution_variance):
@@ -244,7 +242,7 @@ pathToWeightsavingANDextraction = "C:\\Users\\michi\\Desktop\\SSI_Stroke\\"
 # inputColumns = [18,19,20,21,22,23]
 inputColumns = [0, 3, 6, 9, 12, 15]
 windowLength = 200 # 5 gaitcyclus, normalized to 1000 and downsampled to 200
-N_bottleneckFeatures  = 2
+N_bottleneckFeatures  = 4
 windowLength
 fs = 1/0.05 ### 20Hz downsampled
 fmax = fs/2
@@ -679,6 +677,24 @@ plt.figure(5)
 plt.plot(np.array(encoded))
 
 
+###### Newly created data: #######
+# createdData = []
+# gemidFeatures = np.mean(np.array(encoded),axis=0)
+# sdFeatures = np.mean(np.array(encoded),axis=0)
+# dataTemp = []
+
+# for indx in range(0,4):
+#     inputCreated = gemidFeatures
+#     inputCreated[indx]= gemidFeatures[indx]+sdFeatures[indx]*2
+#     inputCreated = np.expand_dims(inputCreated, axis=0)
+#     print(inputCreated)
+#     dataTemp = decoder_model.predict(inputCreated).reshape((200,6))
+#     createdData.append(dataTemp)
+
+
+
+
+
 
 ################### SAVING MODEL #######################
 
@@ -729,6 +745,8 @@ if N_bottleneckFeatures ==2:
     
     
     
+    
+    
     fig1,axs = plt.subplots()
     sns.scatterplot(ax=axs,x='xx', y='yy',hue='z', data=df1)
     
@@ -743,15 +761,7 @@ if N_bottleneckFeatures ==2:
     df1.loc[df1['z'] == 'fall risk-[2]', 'z'] = 'green'
     df1.loc[df1['z'] == 'fall risk-[3]', 'z'] = 'lightgreen'
     ################# Thursday 21/10/2021  ################
-    encoded1 = [0,0]
     
-    for indx in range(len(encoded)):
-        encoded_temp = encoded[indx]
-        encoded1 = np.vstack((encoded1,np.transpose(encoded_temp)))
-    encoded1 = np.delete(encoded1,(0),axis=0)
-    SD_dec = np.delete(SD_dec,(0),axis=0)
-    freq_max = np.delete(freq_max,(0),axis=0)
-    freq_max = freq_max * freqResolutie    
 
 
     fig = plt.figure(10)
@@ -763,20 +773,17 @@ if N_bottleneckFeatures ==2:
     lines = [Line2D([0], [0], color=c, linewidth=3, linestyle='-') for c in colors]
     labels = ['stroke survivors with falls', 'stroke survivors without falls', 'older adults','younger adults']
     plt.legend(lines, labels)
-    plt.scatter(encoded1[0,0],encoded1[0,1],marker='p',color='red',s=100)
-    plt.scatter(encoded1[400,0],encoded1[400,1],marker='p',color='red',s=100)
-    plt.scatter(encoded1[900,0],encoded1[900,1],marker='p',color='red',s=100)
-    # adding 2 
-    plt.scatter(encoded1[0,0]+2,encoded1[0,1]+2,marker='p',color='firebrick',s=100)
-    plt.scatter(encoded1[400,0]+2,encoded1[400,1]+2,marker='p',color='firebrick',s=100)
-    plt.scatter(encoded1[900,0]+2,encoded1[900,1]+2,marker='p',color='firebrick',s=100)
-    # subtracting 2
-    plt.scatter(encoded1[0,0]-2,encoded1[0,1]-2,marker='p',color='firebrick',s=100)
-    plt.scatter(encoded1[400,0]-2,encoded1[400,1]-2,marker='p',color='firebrick',s=100)
-    plt.scatter(encoded1[900,0]-2,encoded1[900,1]-2,marker='p',color='firebrick',s=100)
     plt.show()
     
-
+    encoded1 = [0,0]
+    
+    for indx in range(len(encoded)):
+        encoded_temp = encoded[indx]
+        encoded1 = np.vstack((encoded1,np.transpose(encoded_temp)))
+    encoded1 = np.delete(encoded1,(0),axis=0)
+    SD_dec = np.delete(SD_dec,(0),axis=0)
+    freq_max = np.delete(freq_max,(0),axis=0)
+    freq_max = freq_max * freqResolutie
     
     fig = plt.figure(11)
     ax1 = fig.add_subplot(321)
@@ -871,43 +878,24 @@ if usingExistingModel == False:
 
 #### Additional validation ######
 
-
-#############################################################################
-### training & test data  correlation / rmse and nrmse plus visualisation ###
-#############################################################################
+################################
+### Repeat for training data ###
+################################
 
 error_train = [0,0,0,0,0,0]
 errortemp = []
-correlationtemp = []
-correlation_train = [0,0,0,0,0,0]
-Norerror_train = [0,0,0,0,0,0]
-Norerrortemp = []
-# predictedtrainAll = [0,0,0,0,0,0]
 for indx in range(0,len(train_data)):
     tempDimensiontrain = np.expand_dims(train_data[indx,:,:], axis=0) 
     predictedtrain = autoencoder.predict(tempDimensiontrain)
     predictedtrain = predictedtrain.reshape(200,6)
-    # predictedtrainAll = np.vstack((predictedtrainAll,predictedtrain))
     # RMSE = rmse(predictedExternal[:,:],extern_data[indx,:,:])
     for indx2 in range(0,6):
         errortemp.append(rmse(predictedtrain[:,indx2],train_data[indx,:,indx2]))
-        Norerrortemp.append(nrmse(predictedtrain[:,indx2],train_data[indx,:,indx2]))
-        correlationtemp.append(np.corrcoef((predictedtrain[:,indx2],train_data[indx,:,indx2]))[0,1])
     error_train = np.vstack((error_train,errortemp))
-    Norerror_train = np.vstack((Norerror_train,Norerrortemp))
-    correlation_train = np.vstack((correlation_train,correlationtemp))
     errortemp = []
-    correlationtemp = []
-    Norerrortemp = []
 
 error_train = np.delete(error_train, (0), axis=0)
-Norerror_train = np.delete(Norerror_train, (0), axis=0)
-correlation_train = np.delete(correlation_train, (0), axis=0)
 trainMeanRMSE = np.mean(error_train,axis=0)
-
-boxplottraindata_RMSE = [error_train[:,0],error_train[:,1],error_train[:,2],error_train[:,3],error_train[:,4],error_train[:,5]]
-boxplottraindata_nRMSE = [Norerror_train[:,0],Norerror_train[:,1],Norerror_train[:,2],Norerror_train[:,3],Norerror_train[:,4],Norerror_train[:,5]]
-
 
 ################################
 ### Repeat for test data ###
@@ -915,10 +903,6 @@ boxplottraindata_nRMSE = [Norerror_train[:,0],Norerror_train[:,1],Norerror_train
 
 error_test = [0,0,0,0,0,0]
 errortemp = []
-correlationtemp = []
-correlation_test = [0,0,0,0,0,0]
-Norerror_test = [0,0,0,0,0,0]
-Norerrortemp = []
 for indx in range(0,len(test_data)):
     tempDimensiontest = np.expand_dims(test_data[indx,:,:], axis=0) 
     predictedtest = autoencoder.predict(tempDimensiontest)
@@ -926,107 +910,16 @@ for indx in range(0,len(test_data)):
     # RMSE = rmse(predictedExternal[:,:],extern_data[indx,:,:])
     for indx2 in range(0,6):
         errortemp.append(rmse(predictedtest[:,indx2],test_data[indx,:,indx2]))
-        Norerrortemp.append(nrmse(predictedtest[:,indx2],test_data[indx,:,indx2]))
-        correlationtemp.append(np.corrcoef((predictedtest[:,indx2],test_data[indx,:,indx2]))[0,1])
     error_test = np.vstack((error_test,errortemp))
-    correlation_test = np.vstack((correlation_test,correlationtemp))
-    Norerror_test = np.vstack((Norerror_test,Norerrortemp))
     errortemp = []
-    correlationtemp = []
-    errortemp = []
-    Norerrortemp = []
 
 error_test = np.delete(error_test, (0), axis=0)
 testMeanRMSE = np.mean(error_test,axis=0)
-Norerror_test = np.delete(Norerror_test, (0), axis=0)
-
-
-boxplottestdata_RMSE = [error_test[:,0],error_test[:,1],error_test[:,2],error_test[:,3],error_test[:,4],error_test[:,5]]
-boxplottestdata_nRMSE = [Norerror_test[:,0],Norerror_test[:,1],Norerror_test[:,2],Norerror_test[:,3],Norerror_test[:,4],Norerror_test[:,5]]
-
-
-boxplottraindata = [correlation_train[:,0],correlation_train[:,1],correlation_train[:,2],correlation_train[:,3],correlation_train[:,4],correlation_train[:,5]]
-boxplottestdata = [correlation_test[:,0],correlation_test[:,1],correlation_test[:,2],correlation_test[:,3],correlation_test[:,4],correlation_test[:,5]]
-
-##### START THE PLOTTING ###############################
-
-# Correlation #
-
-fig = plt.figure(24)
-ax1 = fig.add_subplot(211)
-ax1.title.set_text('Correlation boxplot: training dataset')
-
-bplot1 = ax1.boxplot(boxplottraindata,patch_artist=True,showfliers=False)
-
-# ax7.set_xlabel(['Left knee','left hip','left ankle','right knee','right hip','right ankle'])
-ax2 = fig.add_subplot(212)
-ax2.title.set_text('Correlation boxplot: testing dataset')
-bplot2 = ax2.boxplot(boxplottestdata,patch_artist=True,showfliers=False)
-# ax8.set_xlabel(['Left knee','left hip','left ankle','right knee','right hip','right ankle'])
-colors = ['pink', 'lightblue', 'lightgreen','pink', 'lightblue', 'lightgreen']
-for bplot in (bplot1, bplot2):
-    for patch, color in zip(bplot['boxes'], colors):
-        patch.set_facecolor(color)
-plt.show()
-
-
-
-
-# RMSE + NRMSE #
-
-ylim = 60
-ymin =0
-
-fig = plt.figure(18)
-ax1 = fig.add_subplot(221)
-ax1.title.set_text('RMSE boxplot: training dataset')
-
-bplot1 = ax1.boxplot(boxplottraindata_RMSE,patch_artist=True,showfliers=False)
-plt.ylim(top=ylim) #ymax is your value
-plt.ylim(bottom=ymin) #ymin is your value
-plt.ylabel('degrees')
-ax2 = fig.add_subplot(222)
-ax2.title.set_text('Normalized RMSE boxplot: training dataset')
-bplot2 = ax2.boxplot(boxplottraindata_nRMSE,patch_artist=True,showfliers=False)
-# ax8.set_xlabel(['Left knee','left hip','left ankle','right knee','right hip','right ankle'])
-colors = ['pink', 'lightblue', 'lightgreen','pink', 'lightblue', 'lightgreen']
-for bplot in (bplot1, bplot2):
-    for patch, color in zip(bplot['boxes'], colors):
-        patch.set_facecolor(color)
-
-plt.ylim(top=ylim) #ymax is your value
-plt.ylim(bottom=ymin) #ymin is your value
-plt.xlabel('Column number')
-plt.ylabel('percentage')
-
-ax3 = fig.add_subplot(223)
-ax3.title.set_text('RMSE boxplot: test dataset')
-bplot3 = ax3.boxplot(boxplottestdata_RMSE,patch_artist=True,showfliers=False)
-plt.ylim(top=ylim) #ymax is your value
-plt.ylim(bottom=ymin) #ymin is your value
-plt.ylabel('degrees')
-
-ax4 = fig.add_subplot(224)
-ax4.title.set_text('Normalized RMSE boxplot: training dataset')
-bplot4 = ax4.boxplot(boxplottestdata_nRMSE,patch_artist=True,showfliers=False)
-# ax8.set_xlabel(['Left knee','left hip','left ankle','right knee','right hip','right ankle'])
-colors = ['pink', 'lightblue', 'lightgreen','pink', 'lightblue', 'lightgreen']
-for bplot in (bplot1, bplot2,bplot3,bplot4):
-    for patch, color in zip(bplot['boxes'], colors):
-        patch.set_facecolor(color)
-
-plt.ylim(top=ylim) #ymax is your value
-plt.ylim(bottom=ymin) #ymin is your value
-plt.xlabel('Column number')
-plt.ylabel('percentage')
-
-plt.show()
-
-
 
 
 ### plot 1 subplt
-
+ylim = 30
+ymin =0
 
 fig = plt.figure(20)
 ax1 = fig.add_subplot(121)
@@ -1053,13 +946,6 @@ plt.ylim(bottom=ymin) #ymin is your value
 plt.xlabel('Column number')
 plt.ylabel('degrees')
 ## put on discord
-
-
-
-
-
-
-
 
 
 
@@ -1109,13 +995,13 @@ ax3.plot(createdTimeSeriesNeg)
 
 
 
-loss = np.load('C:\\Users\\michi\\Desktop\\SSI_Stroke\\lossfunction_2.npy')
-lossvalidation = np.load('C:\\Users\\michi\\Desktop\\SSI_Stroke\\lossfunction_validation2.npy')
+loss = np.load('C:\\Users\\michi\\Desktop\\SSI_Stroke\\lossfunction_4.npy')
+lossvalidation = np.load('C:\\Users\\michi\\Desktop\\SSI_Stroke\\lossfunction_validation4.npy')
 
 
 fig = plt.figure(22)
 ax1 = fig.add_subplot(111)
-ax1.title.set_text('Training and testing loss')
+# ax1.title.set_text()
 # ax1.plot(loss)
 # ax1.plot(lossvalidation)
 # ax1.legend('Training loss', 'Testing loss')
@@ -1127,11 +1013,77 @@ ax1.title.set_text('Training and testing loss')
 line1, = ax1.plot(loss, label='Training loss')
 line2, = ax1.plot(lossvalidation, label='Testing loss')
 ax1.legend(handles=[line1, line2])
+plt.title('Training and testing loss',fontsize=20)
+plt.xlabel('Number of training Epochs',fontsize=16)
+plt.ylabel('Reconstructions loss & KL loss',fontsize=16)
 
+
+
+
+latent1 = []
+latent2 = []
+latent3 = []
+latent4 = []
+z = []
+groupcolor = []
+for i in range(0,len(np.array(encoded))):
+    # z.append(testy[i])
+    latent1.append(np.array(encoded)[i][0])
+    latent2.append(np.array(encoded)[i][1])
+    latent3.append(np.array(encoded)[i][2])
+    latent4.append(np.array(encoded)[i][3])
+    z.append(test_y[i]) # Fall risk / group
+
+
+latent1 = np.array(latent1)
+latent2 = np.array(latent2)
+latent3 = np.array(latent3)
+latent4 = np.array(latent4)
+df1 = pd.DataFrame()
+df1['Latent feature 1'] = latent1
+df1['Latent feature 2'] = latent2
+df1['Latent feature 3'] = latent3
+df1['Latent feature 4'] = latent4
+df1['z'] = ["fall risk-"+str(k) for k in z]
+df1['groupcolor'] = ["subject-"+str(k) for k in test_data]
+
+
+# fig4, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
+
+# sns.scatterplot(ax=axes[0,0],x='xx', y='yy',hue='z', data=df1)
+# axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
+# axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
+
+
+
+
+
+
+# cb = plt.colorbar()
+# cb.set_label('mean value')
+# plt.show()   
+
+df1.loc[df1['z'] == 'fall risk-[1]', 'z'] = 'orange'
+df1.loc[df1['z'] == 'fall risk-[0]', 'z'] = 'blue'
+df1.loc[df1['z'] == 'fall risk-[2]', 'z'] = 'green'
+df1.loc[df1['z'] == 'fall risk-[3]', 'z'] = 'lightgreen'
+
+
+
+sns.pairplot(df1, hue="z")
 
 
 
 fig = plt.figure(10)
+plt.scatter(df1['xx'], df1['yy'], c=df1['z'],label=df1['z'],edgecolors='white')
+plt.title('2D Variational autoencoder / decoder')
+plt.xlabel('Latent feature 1')
+plt.ylabel('Latent feature 2')
+colors = ['orange', 'blue', 'green','lightgreen']
+lines = [Line2D([0], [0], color=c, linewidth=3, linestyle='-') for c in colors]
+labels = ['stroke survivors with falls', 'stroke survivors without falls', 'older adults','younger adults']
+plt.legend(lines, labels)
+plt.show()
 
 
 
@@ -1185,7 +1137,160 @@ fig = plt.figure(10)
 
 
 
+# elif N_bottleneckFeatures ==3:
+#     print('hoi 3d')
+#     xx = []
+#     yy = []
+#     zz = []
+#     z = []
+#     groupcolor = []
+#     for i in range(0,len(np.array(encoded))):
+#         # z.append(testy[i])
+#         xx.append(np.array(encoded)[i][0])
+#         yy.append(np.array(encoded)[i][1])
+#         zz.append(np.array(encoded)[i][2])
+#         # xx.append(op[0][0])
+#         # yy.append(op[0][1])
+#         z.append(test_data_y[i]) # Fall risk / group
+    
+    
+#     xx = np.array(xx)
+#     yy = np.array(yy)
+#     zz = np.array(zz)
+#     df1 = pd.DataFrame()
+#     df1['xx'] = xx
+#     df1['yy'] = yy
+#     df1['zz'] = zz
+#     df1['z'] = ["fall risk-"+str(k) for k in z]
+#     df1['groupcolor'] = ["subject-"+str(k) for k in test_data]
+    
+    
+#     # fig4, axes = plt.subplots(2, 2, figsize=(15, 5))#, sharey=True
+#     # sns.set(style = "darkgrid")
+#     # fig = plt.figure()
+#     # ax = fig.add_subplot(111, projection = '3d')
+    
+#     # # x = df['Happiness Score']
+#     # # y = df['Economy (GDP per Capita)']
+#     # # z = df['Health (Life Expectancy)']
+    
+#     # ax.set_xlabel("xx")
+#     # ax.set_ylabel("yy")
+#     # ax.set_zlabel("zz")
+    
+#     # ax.scatter(xs='xx', ys='yy',zs = 'zz',hue='z', data=df1)
+    
+#     # plt.show()
+#     # plt.scatter(xx,yy,zz)
+#     # plt.show()
+#     import re, seaborn as sns, numpy as np, pandas as pd, random
+#     from pylab import *
+#     from matplotlib.pyplot import plot, show, draw, figure, cm
+#     import matplotlib.pyplot as plt
+#     from mpl_toolkits.mplot3d import Axes3D
+    
+#     color_dict = dict({'0':'blue',
+#                   '1':'orange',
+#                   '2': 'green'})
+    
+#     sns.set_style("whitegrid", {'axes.grid' : False})
+    
+#     fig = plt.figure(figsize=(6,6))
+    
+#     ax = Axes3D(fig) # Method 1
+#     # ax = fig.add_subplot(111, projection='3d') # Method 2
+    
+#     # x = np.random.uniform(1,20,size=20)
+#     # y = np.random.uniform(1,100,size=20)
+#     # z = np.random.uniform(1,100,size=20)
+    
+    
+#     ax.scatter(xx, yy, zz, c=z, marker='o')#,palette=color_dict
+#     ax.set_xlabel('X Label')
+#     ax.set_ylabel('Y Label')
+#     ax.set_zlabel('Z Label')
+    
+#     plt.show()
+    
+    
 
+#     # sns.scatterplot(ax=axes[0,0],)
+#     # axes[0,0].set_title('Raw latent features per perturbation colored by fall risk')
+#     # axes[0,0].legend(bbox_to_anchor=(-0.05, 1), loc='upper right', borderaxespad=0)
+    
+    
+#     dummySignals = np.zeros((200,6))
+#     dummyX = np.arange(int(np.min(xx)),int(np.max(xx)))
+#     dummyY = np.arange(int(np.min(yy)),int(np.max(yy)))
+#     test_pts0 = []
+#     test_pts1 = []
+#     for indx in range(len(dummyX)): # y values
+#         for indx2 in range(0,len(dummyY)):
+#             test_pts0 = np.append(test_pts0,dummyX[indx]) 
+#             test_pts1 = np.append(test_pts1, dummyY[indx2])
+#             dummyData = np.expand_dims([dummyX[indx],dummyY[indx2]], axis=0)
+#             prediction = decoder_model.predict(dummyData)
+#             predictiondim = prediction.reshape(200,6) #np.squeeze(prediction, axis=(2,))
+#             dummySignals = np.vstack((dummySignals,predictiondim))
+    
+    
+    
+    
+#     minimum1 = []
+#     minimum4 = []
+#     maximum1 = []
+#     maximum4 = []
+#     std1 = []
+#     std4 = []
+    
+    
+#     for indx in np.arange(200, len(dummySignals),200, dtype=None):
+#         # print (indx)
+#         minimum1 = np.append(minimum1, np.min(dummySignals[indx:indx+200,1]))
+#         maximum1 = np.append(maximum1, np.max(dummySignals[indx:indx+200,1]))
+#         minimum4 = np.append(minimum4, np.min(dummySignals[indx:indx+200,4]))
+#         maximum4 = np.append(maximum4, np.max(dummySignals[indx:indx+200,4]))
+#         std1 = np.append(std1, np.std(dummySignals[indx:indx+200,1]))
+#         std4 = np.append(std4, np.std(dummySignals[indx:indx+200,4]))
+    
+    
+#     ### Final features ####
+#     range1 = maximum1 - minimum1
+#     range4 = maximum4 - minimum4
+    
+    
+#     fig1,axs = plt.subplots()
+#     sns.scatterplot(ax=axs,x='xx', y='yy',hue='z', data=df1)
+    
+    
+    
+#     # cb = plt.colorbar()
+#     # cb.set_label('mean value')
+#     # plt.show()   
+    
+#     df1.loc[df1['z'] == 'fall risk-[1]', 'z'] = 'orange'
+#     df1.loc[df1['z'] == 'fall risk-[0]', 'z'] = 'blue'
+#     df1.loc[df1['z'] == 'fall risk-[2]', 'z'] = 'green'
+#     ################# Thursday 21/10/2021  ################
+#     fig = plt.figure(10)
+#     # fig, axes = plt.subplots(2, 2)
+    
+#     fig = plt.figure(11)
+#     ax1 = fig.add_subplot(221)
+#     ax1.title.set_text('2d encoder /decoder')
+#     plt.scatter(df1['xx'], df1['yy'], c=df1['z'])
+#     # axes[1,0]
+#     ax2 = fig.add_subplot(222)
+#     ax2.title.set_text('Range 1')
+#     plt.hexbin(test_pts0, test_pts1, C=range1, cmap=CM.jet, bins=None)
+    
+#     ax3 = fig.add_subplot(223)
+#     ax3.title.set_text('std1 ')
+#     plt.hexbin(test_pts0, test_pts1, C=std1, cmap=CM.jet, bins=None)
+    
+#     ax4 = fig.add_subplot(224)
+#     ax4.title.set_text('std 4')
+#     plt.hexbin(test_pts0, test_pts1, C=std4, cmap=CM.jet, bins=None)
 
 
 
