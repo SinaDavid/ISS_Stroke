@@ -2,7 +2,7 @@
 """
 Created on Tue Aug 31 09:05:18 2021
 
-Authors: Michiel Punt and Sina Davids
+Authors: Michiel Punt and Sina David
 
 Some info about the data set, see also e-mail Sina David 30-08-2021
 
@@ -732,7 +732,7 @@ if N_bottleneckFeatures ==2:
     fig1,axs = plt.subplots()
     sns.scatterplot(ax=axs,x='xx', y='yy',hue='z', data=df1)
     
-    
+    # ff checken.
     
     # cb = plt.colorbar()
     # cb.set_label('mean value')
@@ -759,10 +759,10 @@ if N_bottleneckFeatures ==2:
     plt.title('2D Variational autoencoder / decoder')
     plt.xlabel('Latent feature 1')
     plt.ylabel('Latent feature 2')
-    colors = ['orange', 'blue', 'green','lightgreen']
+    colors = ['orange', 'blue', 'green','lightgreen','red','firebrick']
     lines = [Line2D([0], [0], color=c, linewidth=3, linestyle='-') for c in colors]
-    labels = ['stroke survivors with falls', 'stroke survivors without falls', 'older adults','younger adults']
-    plt.legend(lines, labels)
+    labels = ['stroke survivors with falls', 'stroke survivors without falls', 'older adults','younger adults','selected data point for space exploration','created data point by adding/subtracting two for space exploration']
+    plt.legend(lines, labels,loc='lower left')
     plt.scatter(encoded1[0,0],encoded1[0,1],marker='p',color='red',s=100)
     plt.scatter(encoded1[400,0],encoded1[400,1],marker='p',color='red',s=100)
     plt.scatter(encoded1[900,0],encoded1[900,1],marker='p',color='red',s=100)
@@ -775,8 +775,35 @@ if N_bottleneckFeatures ==2:
     plt.scatter(encoded1[400,0]-2,encoded1[400,1]-2,marker='p',color='firebrick',s=100)
     plt.scatter(encoded1[900,0]-2,encoded1[900,1]-2,marker='p',color='firebrick',s=100)
     plt.show()
+    # first
+    timeserie1 = decoder_model.predict(np.expand_dims([encoded1[0,0],encoded1[0,1]], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[0,0],encoded1[0,1]])+'.txt',timeserie1)
     
-
+    timeserie2 = decoder_model.predict(np.expand_dims([encoded1[0,0]+2,encoded1[0,1]+2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[0,0]+2,encoded1[0,1]+2])+'.txt',timeserie2)    
+    
+    timeserie3 = decoder_model.predict(np.expand_dims([encoded1[0,0]-2,encoded1[0,1]-2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[0,0]-2,encoded1[0,1]-2])+'.txt',timeserie3)     
+    # second
+    timeserie1 = decoder_model.predict(np.expand_dims([encoded1[400,0],encoded1[400,1]], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[400,0],encoded1[400,1]])+'.txt',timeserie1)
+    
+    timeserie2 = decoder_model.predict(np.expand_dims([encoded1[400,0]+2,encoded1[400,1]+2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[400,0]+2,encoded1[400,1]+2])+'.txt',timeserie2)    
+    
+    timeserie3 = decoder_model.predict(np.expand_dims([encoded1[400,0]-2,encoded1[400,1]-2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[400,0]-2,encoded1[400,1]-2])+'.txt',timeserie3)   
+    # third
+    timeserie1 = decoder_model.predict(np.expand_dims([encoded1[900,0],encoded1[900,1]], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0],encoded1[900,1]])+'.txt',timeserie1)
+    
+    timeserie2 = decoder_model.predict(np.expand_dims([encoded1[900,0]+2,encoded1[900,1]+2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0]+2,encoded1[900,1]+2])+'.txt',timeserie2)    
+    
+    timeserie3 = decoder_model.predict(np.expand_dims([encoded1[900,0]-2,encoded1[900,1]-2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0]-2,encoded1[900,1]-2])+'.txt',timeserie3)       
+    
+    
     
     fig = plt.figure(11)
     ax1 = fig.add_subplot(321)
@@ -1131,7 +1158,7 @@ ax1.legend(handles=[line1, line2])
 
 
 
-fig = plt.figure(10)
+
 
 
 
