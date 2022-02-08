@@ -135,24 +135,24 @@ import scipy.io as sio
 # import os
 import scipy.io as spio
 from matplotlib import cm as CM
-from matplotlib import mlab as ML
+#from matplotlib import mlab as ML
 # import numpy as np
 from keras.callbacks import EarlyStopping
-from keras.layers import MaxPool2D, AvgPool2D, BatchNormalization, Dropout, Input,Activation
-from keras import layers
-from keras.layers import Activation
-from sklearn import preprocessing
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_recall_fscore_support
-import itertools
-from sklearn.metrics import confusion_matrix
-from keras.regularizers import l2
-from keras.models import load_model
-from keras import regularizers
+#from keras.layers import MaxPool2D, AvgPool2D, BatchNormalization, Dropout, Input,Activation
+#from keras import layers
+#rom keras.layers import Activation
+#from sklearn import preprocessing
+#from sklearn.metrics import confusion_matrix
+#from sklearn.metrics import precision_recall_fscore_support
+#import itertools
+#from sklearn.metrics import confusion_matrix
+#from keras.regularizers import l2
+#from keras.models import load_model
+#from keras import regularizers
 from matplotlib.lines import Line2D
-from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,LeaveOneGroupOut,
-                                      StratifiedKFold, GroupShuffleSplit,
-                                      GroupKFold, StratifiedShuffleSplit)
+#from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,LeaveOneGroupOut,
+#                                      StratifiedKFold, GroupShuffleSplit,
+#                                      GroupKFold, StratifiedShuffleSplit)
 import pickle
 import pandas as pd
 import seaborn as sns
@@ -341,7 +341,7 @@ dataAugmented = np.zeros(len(inputColumns))
 for indx in range(len(data)):
     if len(data[indx])>200:
         print(indx)
-        for indx2 in range(0,len(dataE[indx]),2):
+        for indx2 in range(0,len(dataE[indx]),2): # in steps of to so every second step can be a new data for training or testing.
             index = dataE[indx][indx2]
             tempArray = data[indx][int(index[0]):]
             if len(tempArray)>200:
@@ -807,6 +807,29 @@ if N_bottleneckFeatures ==2:
     
     timeserie3 = decoder_model.predict(np.expand_dims([encoded1[900,0]-2,encoded1[900,1]-2], axis=0)).reshape(200,6)
     np.savetxt(str([encoded1[900,0]-2,encoded1[900,1]-2])+'.txt',timeserie3)       
+    
+    # fourth --> which sample!!? 
+    timeserie1 = decoder_model.predict(np.expand_dims([encoded1[900,0],encoded1[900,1]], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0],encoded1[900,1]])+'.txt',timeserie1)
+    
+    timeserie2 = decoder_model.predict(np.expand_dims([encoded1[900,0]+2,encoded1[900,1]+2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0]+2,encoded1[900,1]+2])+'.txt',timeserie2)    
+    
+    timeserie3 = decoder_model.predict(np.expand_dims([encoded1[900,0]-2,encoded1[900,1]-2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0]-2,encoded1[900,1]-2])+'.txt',timeserie3)     
+    
+    # fifth --> which sample!!? 
+    timeserie1 = decoder_model.predict(np.expand_dims([encoded1[900,0],encoded1[900,1]], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0],encoded1[900,1]])+'.txt',timeserie1)
+    
+    timeserie2 = decoder_model.predict(np.expand_dims([encoded1[900,0]+2,encoded1[900,1]+2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0]+2,encoded1[900,1]+2])+'.txt',timeserie2)    
+    
+    timeserie3 = decoder_model.predict(np.expand_dims([encoded1[900,0]-2,encoded1[900,1]-2], axis=0)).reshape(200,6)
+    np.savetxt(str([encoded1[900,0]-2,encoded1[900,1]-2])+'.txt',timeserie3)     
+    
+    
+    
     
     
     
