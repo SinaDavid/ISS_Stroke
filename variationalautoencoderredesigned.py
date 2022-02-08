@@ -28,9 +28,9 @@ windowLength = 200 # do not change this.
 ## Some required settings ##
 ############################
 inputColumns = [0, 3, 6, 9, 12, 15]
-latentFeatures = 2 # 3 / 4
-trainModel = False # False
-frequency = 50 # 20 / 50  
+latentFeatures = 4#2  3 / 
+trainModel =  False #False#
+frequency = 20 # 20 / 50  
 ############################
 ##### end of settings! #####
 ############################
@@ -219,10 +219,8 @@ trackGroup1 = []
 dataAugmented = np.zeros(len(inputColumns))
 for indx in range(len(data)):
     if len(data[indx])>windowLength:
-        print(indx)
         for indx2 in range(0,len(dataE[indx]),2): # in steps of to so every second step can be a new data for training or testing.
-            print('door de 2de indx2')
-            print(indx2)
+
             index = dataE[indx][indx2]
             tempArray = data[indx][int(index[0]):]
             if len(tempArray)>windowLength:
@@ -535,32 +533,32 @@ if latentFeatures ==2:
     fig = plt.figure(13)
     ax1 = fig.add_subplot(321)
     ax1.title.set_text('Range 1')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,0], cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,0], cmap=CM.jet,vmin=0, vmax=100, bins=None)
     plt.colorbar()
 
     ax2 = fig.add_subplot(322)
     ax2.title.set_text('Range2')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,1], cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,1], cmap=CM.jet,vmin=0, vmax=100, bins=None)
     plt.colorbar()
     
     ax3 = fig.add_subplot(323)
     ax3.title.set_text('Range 3 ')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,2], cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,2], cmap=CM.jet,vmin=0, vmax=100, bins=None)
     plt.colorbar()
     
     ax4 = fig.add_subplot(324)
     ax4.title.set_text('Range 4')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,3], cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,3], cmap=CM.jet,vmin=0, vmax=100, bins=None)
     plt.colorbar()
     
     ax5 = fig.add_subplot(325)
     ax5.title.set_text('Range 5')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,4], cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,4], cmap=CM.jet,vmin=0, vmax=100, bins=None)
     plt.colorbar()
     
     ax6 = fig.add_subplot(326)
     ax6.title.set_text('Range 6')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,5], cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=signalRange[:,5], cmap=CM.jet,vmin=0, vmax=100, bins=None)
     plt.colorbar()
     plt.suptitle('Range ',fontsize=20)
 
@@ -570,19 +568,19 @@ if latentFeatures ==2:
     symmetry = []
     symmetry = signalRange[:,0]/signalRange[:,3]
     fig = plt.figure(14)
-    ax1 = fig.add_subplot(311)
+    ax1 = fig.add_subplot(321)
     ax1.title.set_text('symmetry 1')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=symmetry, cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=symmetry, cmap=CM.jet,vmin=0.5, vmax=1.5, bins=None)
     plt.colorbar()
     symmetry = signalRange[:,1]/signalRange[:,4]
-    ax2 = fig.add_subplot(312)
+    ax2 = fig.add_subplot(323)
     ax2.title.set_text('symmetry 2')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=symmetry, cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=symmetry, cmap=CM.jet,vmin=0.5, vmax=1.5, bins=None)
     plt.colorbar()
     symmetry = signalRange[:,2]/signalRange[:,5]
-    ax3 = fig.add_subplot(313)
+    ax3 = fig.add_subplot(325)
     ax3.title.set_text('symmetry 3 ')
-    plt.hexbin(encoded1[:,0], encoded1[:,1], C=symmetry, cmap=CM.jet, bins=None)
+    plt.hexbin(encoded1[:,0], encoded1[:,1], C=symmetry, cmap=CM.jet,vmin=0.5, vmax=1.5, bins=None)
     plt.colorbar()
 
 
