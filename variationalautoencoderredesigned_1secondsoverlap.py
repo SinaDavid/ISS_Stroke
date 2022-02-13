@@ -30,7 +30,7 @@ windowLength = 200 # do not change this.
 inputColumns = [0, 3, 6, 9, 12, 15]
 latentFeatures = 2#2  3 / 
 trainModel =  True #False #False#
-frequency = 20 # 20 / 50  
+frequency = 50#20 # 20 / 50  
 ############################
 ##### end of settings! #####
 ############################
@@ -48,7 +48,7 @@ else:
 pathToDataRelativeAngles = "F:\\SSI_data\\OneFilePerPerson1\\OneFilePerPerson\\prox_relativeangles\\"
 pathToDataEvents = "F:\\SSI_data\\OneFilePerPerson1\\OneFilePerPerson\\Events\\"
 pathToInitializedWeights = "C:\\Users\\michi\\Desktop\\SSI_Stroke\\initializedWeights\\"
-pathToTrainedWeights = "C:\\Users\\michi\\Desktop\\SSI_Stroke\\trainedWeights\\12022022_withoutS017_S022\\"
+pathToTrainedWeights = "C:\\Users\\michi\\Desktop\\SSI_Stroke\\trainedWeights\\1seconds_overlap\\"
 
 pathToCleanData = "F:\\SSI_data\\OneFilePerPerson1\\OneFilePerPerson\\"
 ########################
@@ -232,18 +232,28 @@ trackGroup1 = []
 dataAugmented = np.zeros(len(inputColumns))
 for indx in range(len(data)):
     if len(data[indx])>windowLength:
-        for indx2 in range(0,len(dataE[indx]),2): # in steps of to so every second step can be a new data for training or testing.
-
-            index = dataE[indx][indx2]
-            tempArray = data[indx][int(index[0]):]
-            if len(tempArray)>windowLength:
-                count +=1
-                dataAugmented = np.vstack((dataAugmented,tempArray[0:windowLength,inputColumns]))
+        numberOf = int(np.round(len(data[indx])/frequency,0))
+        tempArray = data[indx]
+        for indx2 in range(0,numberOf):
+            tempArray1 = tempArray[indx2*frequency:indx2*frequency+windowLength,inputColumns]
+            if len(tempArray1)==windowLength:
+                dataAugmented = np.vstack((dataAugmented,tempArray1))
                 trackGroup.append(indx)
+                print('hier o')
                 if indx < start:
                     trackGroup1.append('SS'+str(group[indx]))
                 else:
                     trackGroup1.append('W'+str(group[indx]))
+        
+        # for indx2 in range(0,len(dataE[indx]),2): # in steps of two so every second step can be a new data for training or testing.
+
+        #     index = dataE[indx][indx2]
+        #     tempArray = data[indx][int(index[0]):]
+        #     if len(tempArray)>windowLength:
+        #         count +=1
+        #         dataAugmented = np.vstack((dataAugmented,tempArray[0:windowLength,inputColumns]))
+                
+                
 #  Always remove first row (due to initialize issues)       
 dataAugmented = np.delete(dataAugmented, (0), axis=0) 
 
@@ -408,9 +418,9 @@ if trainModel:
     autoencoder.summary()
     history = autoencoder.fit(train_data,
                               train_data,
-                              epochs=200,
+                              epochs=400,
                               batch_size=64,
-                              callbacks=[EarlyStopping(monitor='loss', patience=25)],
+                              callbacks=[EarlyStopping(monitor='loss', patience=50)],
                               validation_data=(test_data, test_data))
     
     plt.plot(history.history['val_loss'])
