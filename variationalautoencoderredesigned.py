@@ -30,7 +30,7 @@ windowLength = 200 # do not change this.
 inputColumns = [0, 3, 6, 9, 12, 15]
 latentFeatures = 4#2  3 / 
 trainModel =  True #False #False#
-frequency = 20 # 20 / 50  
+frequency = 50 # 20 / 50  
 ############################
 ##### end of settings! #####
 ############################
