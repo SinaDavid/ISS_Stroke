@@ -28,7 +28,7 @@ windowLength = 200 # do not change this.
 ## Some required settings ##
 ############################
 inputColumns = [0, 3, 6, 9, 12, 15]
-latentFeatures = 2#2  3 / 
+latentFeatures = 4#2  3 / 
 trainModel =  True #False #False#
 frequency = 20 # 20 / 50  
 ############################
@@ -408,7 +408,7 @@ if trainModel:
     autoencoder.summary()
     history = autoencoder.fit(train_data,
                               train_data,
-                              epochs=200,
+                              epochs=300,
                               batch_size=64,
                               callbacks=[EarlyStopping(monitor='loss', patience=25)],
                               validation_data=(test_data, test_data))
