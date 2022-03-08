@@ -35,10 +35,10 @@ windowLength = 200 # do not change this.
 ## Some required settings ##
 ############################
 inputColumns = [0, 3, 6, 9, 12, 15]
-latentFeatures = 2 #  3 /     --> Sina is currently writing the paper visuals for 2 latentfeatures and validation also for 4 latentfeatures. (2 and 4?)
-trainModel =  True #False #  #False #False#
-frequency = 20  # 20 / 50 HZ   ----> Sina is aiming for using the 20Hz option. 
-storingWeights = False
+latentFeatures = 3 # 2 #  3 /     --> Sina is currently writing the paper visuals for 2 latentfeatures and validation also for 4 latentfeatures. (2 and 4?)
+trainModel =  True #False
+frequency = 50  # 20 / 50 HZ   ----> Sina is aiming for using the 20Hz option. 
+storingWeights = True   # true / false
 ############################
 ##### end of settings! #####  20 * 10 seconds = input data 200  --> more gait cycles included. 
 ############################  50 * 4 seconds = 200 samples. 
@@ -314,9 +314,9 @@ groupsplit =  groupsplit[indexeninternSubjects]
 
 ### saving other_data, y_adapted and groupsplit. so next the manuscrit can start over here!
 
-# np.save(pathToCleanData + "stored_other_data_" + str(latentFeatures) + "_" + str(frequency),other_data)
-# np.save(pathToCleanData + "stored_y_adapted_" + str(latentFeatures) + "_" + str(frequency),y_adapted)
-# np.save(pathToCleanData + "stored_groupsplit_" + str(latentFeatures) + "_" + str(frequency),groupsplit)
+np.save(pathToCleanData + "stored_other_data_withoutS01722_latentfeatures_" + str(latentFeatures) + "_frequency_" + str(frequency),other_data)
+np.save(pathToCleanData + "stored_y_adapted_withoutS01722_latentfeatures_" + str(latentFeatures) + "_frequency_" + str(frequency),y_adapted)
+np.save(pathToCleanData + "stored_groupsplit_withoutS01722_latentfeatures_" + str(latentFeatures) + "_frequency_" + str(frequency),groupsplit)
 
 
 
@@ -420,7 +420,7 @@ if trainModel:
     autoencoder.summary()
     history = autoencoder.fit(train_data,
                               train_data,
-                              epochs=3,
+                              epochs=200,
                               batch_size=64,
                               callbacks=[EarlyStopping(monitor='loss', patience=25)],
                               validation_data=(test_data, test_data))
